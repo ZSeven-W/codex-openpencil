@@ -31,6 +31,9 @@ for (const arg of mcp.mcpServers.codex_openpencil.args) {
   const path = arg.replace('${PLUGIN_ROOT}', pluginRoot);
   assert.ok((await stat(path)).isFile());
 }
+for (const asset of ['app.html', 'panel.html', 'panel.css', 'panel.js']) {
+  assert.ok((await stat(join(pluginRoot, 'ui', asset))).isFile(), `Missing canvas asset: ${asset}`);
+}
 async function scan(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);

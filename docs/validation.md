@@ -1,3 +1,67 @@
+# Interactive canvas validation — 2026-10-15
+
+Validated v0.2.0 on macOS with the complete Rust 0.8.5 runtime. The main Rust
+repository and the user's existing desktop document were not modified.
+
+## Actual interactive editing
+
+The local panel was opened in the user's existing authenticated Chrome profile.
+The complete Rust editor visibly rendered the fixture, layers, toolbar and zoom.
+
+- A keyboard move changed the selected frame from x=80 to x=82; native MCP
+  `batch_get` read that same edit from the managed daemon.
+- `update_node` changed the headline through the packaged stdio connection; the
+  interactive canvas immediately displayed the updated text.
+- UI Save flushed its browser snapshot and displayed “已保存”. File readback
+  retained both x=82 and the agent-edited headline.
+- UI Save As created a different `.op` file and updated the displayed source path.
+- A new independent Rust session reopened that saved file and verified both edits
+  and the active page. The automatic canvas smoke also saved and reopened its file.
+- A real panel screenshot and source files are retained only in ignored local
+  `artifacts/canvas-*` output. They are not bundled example user documents.
+
+This validation found and repaired a save mismatch between disk snapshots
+(`editorMeta`, compact image tables) and runtime JSON. A regression checks that
+normalization accepts equivalent images while still rejecting edited text,
+changed active pages and changes hidden in free-form state.
+
+## Native Codex protocol and installation
+
+- `codex plugin add openpencil@zseven-openpencil --json` installed v0.2.0.
+- Native `plugin/read` and `mcpServerStatus/list` loaded the cached plugin and
+  discovered 183 tools (179 existing desktop tools plus four canvas controls).
+- Native `mcpServer/resource/read` returned `text/html;profile=mcp-app` and the
+  canvas tool retained both `ui.resourceUri` and its `openai/ui` thread entrypoint.
+- Native `mcpServer/tool/call` opened the saved file with `open_canvas`. Subsequent
+  `batch_get` and `canvas_status` read that managed document through the same client.
+- This used an ephemeral app-server test context, with zero model turns and no
+  user-visible new task. Only owned test processes were stopped.
+- Direct managed-runtime tool discovery returned 176 tools (172 native tools in
+  the configured runtime plus four controls). Codex's status inventory remained
+  cached at 183 after its list-changed notification. Runtime tool availability
+  follows the configured release; the UI and core edit/read/save routing were verified.
+
+The current Computer Use tool rejects access to the Codex app. Consequently,
+**native desktop embedded presentation remains unverified**. Resource registration
+and successful browser interaction do not claim that additional UI check passed.
+Reconnect the upgraded plugin or open a new chat to load its entrypoint.
+
+## Checks
+
+`npm run check` and all 21 tests passed. Coverage includes existing discovery and
+transport safeguards, external-save conflict protection, non-overwriting Save As,
+runtime validation, shared-daemon routing, private lifecycle tokens, ordered
+no-retry controls, narrow panel origins, offline resource discovery, disk/live
+snapshot equivalence and the executable MCP Apps handshake/context bridge.
+
+Both isolated Rust smoke paths passed: existing-editor create/read/layout/lint/
+PNG/save/reopen and managed-canvas native edit/save/new-session reopen. Updated
+existing-editor discovery returned 183 tools and lint reported zero issues.
+Cross-platform CI runs are available in [GitHub Actions](https://github.com/ZSeven-W/codex-openpencil/actions).
+Clean-machine runtime acquisition and public directory publication remain separate.
+
+---
+
 # Initial validation — 2026-10-14
 
 Validated locally with Codex CLI 0.162.0, Node.js 26.7.0, and the Rust

@@ -1,46 +1,45 @@
 # Codex OpenPencil
 
-让 Codex 通过本地 Rust OpenPencil 编辑器创建、检查、预览和保存可编辑的 `.op` 设计。
+v0.2.0 已加入真实可编辑画布，复用完整 Rust OpenPencil 编辑器。
+交互操作与 Codex 的 MCP 修改使用同一份文档，支持图层、选择、文字与形状编辑、
+平移缩放、保存和恢复草稿。
 
-首版包含完整插件包装、动态端口发现、MCP 协议桥接、连接诊断和设计技能。
-设计引擎和工具实现复用 OpenPencil 主项目。
+## 安装与启动
 
-## 安装
-
-需要本地 Node.js 22+、支持插件市场的新版 Codex，以及开启 MCP 的 Rust OpenPencil。
+需要本地 Node.js 22+、支持插件市场的新版 Codex，以及完整 Rust 编辑器运行包。
 
 ```sh
 git clone git@github.com:ZSeven-W/codex-openpencil.git
 cd codex-openpencil
 codex plugin marketplace add .
 codex plugin add openpencil@zseven-openpencil
-npm run doctor
+npm run configure-runtime -- /absolute/path/to/runtime
 ```
 
-安装后重新连接插件或新建聊天，让技能和 MCP 工具载入。没有 `plugin add`
-命令的桌面客户端，可以在插件目录中选择这个本地来源进行安装。
+运行包须包含 `openpencil-runtime.json`、Rust Web 服务、对应版本的可编辑 WASM
+和 CanvasKit。可以复用 DSH 插件的完整运行包，无需启动 DSH；只读 Web SDK 不能
+代替编辑器。配置写入本机私有的 `~/.codex-openpencil/runtime.json`，不打包绝对
+路径。启动前校验全部文件哈希、平台和版本，不自动下载运行包。
 
-在 OpenPencil 的 Agent Settings 中开启 MCP。桥接会读取
-`~/.openpencil/.op-mcp-port` 并核验实例标识，不写死本机端口，也不会自动启动
-或停止编辑器。若启动聊天时编辑器未运行，请启动后重新连接插件。
+安装或更新后重新连接插件或新建聊天，然后提出：
 
-可直接提出：
+> 打开这个聊天的 OpenPencil 交互画布。
 
-> 用 OpenPencil 做一个单页仪表盘，检查布局，展示 PNG 预览，并保存为项目中的新 .op 文件。
+`open_canvas` 提供 MCP Apps UI 资源和 Codex 聊天入口。不支持 MCP Apps 的客户端
+可打开返回的本地 `panelUrl`。每个聊天拥有独立 Rust 服务与一份文档；插件关闭后
+服务退出。恢复草稿保留在 `~/.codex-openpencil/sessions/`，可在新聊天重新打开。
 
-技能包含一页/多页选择、原文内容保留、脚本创建、已有节点修改、截图检查和保存后重读。
-MCP 连接不重复执行超时的写操作，避免一次编辑被应用两次。
+保存前同步浏览器修改，源文件被外部改动时停止保存；另存为不覆盖已有文件。
+打开已有文件时先复制到独立会话，所有后续原生工具统一指向托管画布。
 
-## 当前范围
+## 连接已有桌面编辑器
 
-- 通过原生 MCP 工具操作可编辑的矢量设计。
-- 在聊天中返回原生 PNG 图片预览。
-- 通过实际实例标识避免陈旧端口误连接。
-- 尚未实现 DSH 的聊天内嵌交互画布和托管编辑器卡片。
-- 尚未提交或上架 OpenAI 公共插件目录。
+在 Rust OpenPencil 的 Agent Settings 中开启 MCP，运行 `npm run doctor`。
+尚未打开托管画布时，桥接读取 `~/.openpencil/.op-mcp-port` 并核验实例标识；
+打开后改为连接自有 Rust 服务。写操作超时不会自动重试。
 
-如果已有手动配置的 `mcp_servers.openpencil`，安装后可能看到两套工具。
-先验证插件，再按需移除旧的手动配置；安装不会自动删除它。
+如果已有手动配置的 `mcp_servers.openpencil`，可能看到两套工具；先验证插件，
+再按需移除旧配置。安装不会自动删除其他配置。
 
 ## 验证
 
@@ -48,9 +47,12 @@ MCP 连接不重复执行超时的写操作，避免一次编辑被应用两次�
 npm run check
 npm test
 npm run smoke -- --binary /path/to/openpencil-desktop
+npm run canvas-smoke
+npm run canvas-smoke -- --hold
 ```
 
-端到端验证启动独立文件服务，覆盖握手、工具发现、创建、读取、布局、lint、
-PNG 渲染、保存和重新打开。输出位于忽略的 `artifacts/` 目录，不修改日常使用的画布。
+验证使用独立文档，不修改日常画布。浏览器实际编辑与保存、Codex 原生资源加载、
+桌面宿主内嵌 UI 呈现分别记录，见[验证记录](docs/validation.md)。
+尚未提交或上架 OpenAI 公共插件目录。
 
-完整说明见 [English README](README.md) 和 [架构说明](docs/architecture.md)。
+完整说明见 [English README](README.md) 和[架构说明](docs/architecture.md)。

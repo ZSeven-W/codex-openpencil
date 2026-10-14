@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenPencil · Codex Canvas</title><style>/* PANEL_CSS */</style></head>
+<body>
+<header><div class="brand"><span class="mark">↗</span><strong>OpenPencil</strong><span class="context">CODEX CANVAS</span></div><div class="actions"><span id="status" role="status" aria-live="polite">正在连接画布…</span><button id="save-as" disabled>另存为</button><button id="save" class="primary" disabled>保存 <kbd>⌘ S</kbd></button></div></header>
+<main><iframe id="editor" title="OpenPencil 可编辑画布" allow="clipboard-read; clipboard-write; local-fonts"></iframe><div id="loading" role="status"><span class="spinner"></span><strong>正在打开你的画布</strong><span>加载编辑器，连接同一份设计文档</span></div></main>
+<footer><span class="live-dot"></span><span id="document-label">独立文档会话</span><span id="recovery">编辑自动保留恢复草稿 · 保存后写入 .op 文件</span></footer>
+<div id="error" role="alert" hidden></div>
+<dialog id="save-dialog"><form method="dialog" id="save-form"><h2>保存设计</h2><p>填写 .op 文件的完整路径。另存为需要新路径，不会覆盖其他设计。</p><label for="file-path">文件路径</label><input id="file-path" name="file-path" required placeholder="/absolute/path/design.op" autocomplete="off"><div class="dialog-actions"><button id="cancel" type="button">取消</button><button class="primary" type="submit">保存文件</button></div></form></dialog>
+<script>const grant = /* PANEL_GRANT */;
+/* PANEL_JS */</script></body></html>

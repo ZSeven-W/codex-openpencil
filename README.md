@@ -1,18 +1,15 @@
 # Codex OpenPencil
 
-Design editable vector UI with Codex and the local Rust
-[OpenPencil](https://github.com/ZSeven-W/openpencil) editor.
+Design editable vector UI with Codex and the local Rust [OpenPencil](https://github.com/ZSeven-W/openpencil) engine.
 
-[中文说明](README.zh.md) · [Architecture](docs/architecture.md)
+[中文说明](README.zh.md) · [Architecture](docs/architecture.md) · [Validation](docs/validation.md)
 
-This repository packages an OpenPencil **Codex plugin**, a dependency-free
-stdio-to-HTTP MCP bridge, and focused setup/design skills. It reuses the editor's
-native tool catalog instead of implementing a second design engine.
+v0.2.0 adds the complete interactive Rust canvas, an MCP Apps UI resource and
+Codex thread entrypoint. Interactive edits and Codex tools share one document.
+The plugin has no npm runtime dependencies and requires Node.js 22+ and a recent
+Codex client with plugin marketplace support.
 
 ## Install
-
-Requires Node.js 22+ in the local executor's PATH, a recent Codex client with
-plugin marketplace support, and a running Rust OpenPencil editor with MCP enabled.
 
 ```sh
 git clone git@github.com:ZSeven-W/codex-openpencil.git
@@ -21,103 +18,99 @@ codex plugin marketplace add .
 codex plugin add openpencil@zseven-openpencil
 ```
 
-For a repository you can access through HTTPS, the marketplace can also be added
-directly with `codex plugin marketplace add ZSeven-W/codex-openpencil`.
-Clients without `plugin add` can install from the local source in the desktop
-Plugins Directory. Restart/reconnect or open a new chat to load the installed
-skills and MCP server.
+The marketplace can also be added directly with
+`codex plugin marketplace add ZSeven-W/codex-openpencil` if you have repository
+access. Clients without `plugin add` can use the desktop Plugins Directory.
+Reconnect the plugin or open a new chat to load its installed skills and tools.
 
-Open the Rust OpenPencil editor, enable MCP in Agent Settings, and run:
+## Interactive canvas
+
+Configure an existing complete Rust editor runtime:
+
+```sh
+npm run configure-runtime -- /absolute/path/to/runtime
+```
+
+It must contain `openpencil-runtime.json`, `bin/op-host-web-server` (with `.exe`
+on Windows), the matching editable WASM bundle and CanvasKit assets. The DSH
+plugin's complete runtime package can be reused; DSH itself is not required.
+The public read-only web SDK or a desktop binary alone is insufficient. Every
+manifest hash, platform and release is verified before launching. Runtime
+acquisition is not automated. The location is saved privately in
+`~/.codex-openpencil/runtime.json`, never in the plugin. Alternatively set
+`OPENPENCIL_EDITOR_RUNTIME_DIR` in the MCP process environment.
+
+After reconnecting or opening a new chat, ask:
+
+> Open an interactive OpenPencil canvas for this conversation.
+
+`open_canvas` starts a separate managed Rust editor. It supports layers, selection,
+pan/zoom, text and shape editing. Codex tools and interactive edits target that
+same document. Save and Save As write `.op` files; source conflicts stop a save,
+and Save As refuses an existing destination. Recovery drafts survive under
+`~/.codex-openpencil/sessions/`. Opening an existing file copies it into the session.
+A conversation keeps one canvas; use another chat for a different document.
+
+The tool advertises an MCP Apps resource and a Codex thread entrypoint. Hosts
+without MCP Apps UI can open its returned loopback `panelUrl`. The URL is temporary:
+closing the plugin ends only its owned Rust process. Native resource loading,
+browser interaction and desktop embedded presentation are separate validation
+steps; see [evidence and remaining checks](docs/validation.md).
+
+## Existing desktop editor
+
+Open Rust OpenPencil, enable MCP in Agent Settings, and run:
 
 ```sh
 npm run doctor
-```
-
-The doctor verifies the running instance described in
-`~/.openpencil/.op-mcp-port`. The bridge never hard-codes a user-specific port.
-For an intentional headless endpoint, pass a local port:
-
-```sh
+# An intentional isolated endpoint:
 npm run doctor -- --port 3100
 ```
 
-Use the setup workflow after installing, then try:
+Until `open_canvas` opens a managed session, the bridge reads
+`~/.openpencil/.op-mcp-port` and verifies the server identity and matching instance
+token before forwarding to loopback `/mcp`. It rejects stale records, unrelated
+listeners and legacy REST endpoints. Once managed, all native tools route to the
+owned daemon, including guarded `save_document`. Failed writes are never retried.
 
-> Create a single-page dashboard in OpenPencil. Inspect its layout, show a PNG
-> preview, and save the editable design to a new .op file in this project.
+The four canvas tools and UI resource remain discoverable with the desktop editor
+offline. Reconnect after starting a missing desktop editor to refresh its native
+catalog. Explicit local ports can use `OPENPENCIL_MCP_PORT` or `--port PORT`; do not
+commit machine settings. Existing direct MCP configuration may expose duplicate
+tools; installation does not remove unrelated configuration.
 
-## What's included
+## Included workflows
 
-- Native Rust MCP tools for creating, reading, refining, rendering, and saving
-  real `.op` documents.
-- Instance-verified connection to the live editor; explicit port support for
-  isolated/headless hosts.
-- `openpencil-setup` for connection diagnostics and `openpencil-design` for
-  script-based creation, content preservation, layout/visual QA, and save checks.
-- Native image blocks passed through without converting PNGs to text.
-- A repo marketplace, regression tests, and an isolated end-to-end smoke runner.
+- Native Rust tools for creating, inspecting, refining, rendering and saving UI.
+- A complete editable canvas with managed routing, recovery and guarded saves.
+- `openpencil-setup` for runtime/connection diagnostics, and `openpencil-design`
+  for page-count choices, content preservation, layout/visual QA and saved readback.
+- Native MCP image passthrough, a repo marketplace and protocol regressions.
 
-**Current boundary:** this first version does not reproduce DSH's embedded
-interactive canvas or managed-editor cards. Edit interactively in OpenPencil;
-Codex can inspect and modify it through MCP and display PNG previews.
-It is not listed in OpenAI's public Plugin Directory.
+The plugin is not listed in OpenAI's public Plugin Directory.
 
-## Connection behavior
-
-The bundled `codex_openpencil` server in `mcp.json` launches
-`node ${PLUGIN_ROOT}/scripts/mcp-bridge.mjs`.
-There are no npm runtime dependencies and no package install hooks.
-
-On each request, the bridge reads the discovery record and verifies the
-`openpencil-mcp` identity and matching instance token before forwarding to
-`127.0.0.1`. It rejects stale records, legacy REST endpoints, and unrelated
-listeners. It does not automatically start/stop the editor or retry writes.
-An editor must be reachable during tool discovery; after starting a missing
-editor, reconnect the plugin or begin a new chat.
-
-For intentional ports without a live record, set `OPENPENCIL_MCP_PORT` in the
-MCP process environment or add `--port PORT` to the server args. The endpoint
-still must identify as OpenPencil. Do not commit machine-specific settings.
-
-Existing direct `mcp_servers.openpencil` configuration may show a duplicate tool
-catalog alongside this plugin. Test the plugin connection first, then remove
-the old direct entry if you choose to migrate; installation does not remove it.
-
-## Development and validation
+## Development
 
 ```sh
 npm run check
 npm test
 npm run smoke -- --binary /path/to/openpencil-desktop
+npm run canvas-smoke
+# Hold an isolated canvas open for interactive verification:
+npm run canvas-smoke -- --hold
 ```
 
-The smoke runner launches a separate file-backed Rust HTTP host on a temporary
-port. It uses the real stdio bridge to initialize, discover tools, create a frame,
-read its content, inspect layout/lint, render a native PNG, save, and reopen.
-Outputs go to ignored `artifacts/smoke-*` directories. It terminates only its own
-processes and never edits the live canvas. CI tests the bridge on Linux, macOS,
-and Windows with Node.js 22/24; a Rust host is required for the smoke test.
-
+The smoke runners use isolated file-backed Rust hosts and ignored `artifacts/`
+outputs. They terminate only their own processes and never edit the live canvas.
+CI checks packaging and protocol behavior on Linux/macOS/Windows with Node.js
+22/24. A complete compatible Rust runtime is needed for the canvas smoke.
 After edits, reinstall with `codex plugin add openpencil@zseven-openpencil` and
-restart/reconnect to refresh the cached package.
+reconnect to refresh the cached package.
 
-## Package layout
+The package lives in `plugins/openpencil/`: portable `plugin.json`, `mcp.json`,
+Node bridge/session scripts, `ui/` assets and two skills. It follows
+[OpenAI plugin packaging](https://developers.openai.com/plugins/build/plugins),
+[UI extensions](https://developers.openai.com/plugins/build/chatgpt-ui) and
+[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview).
 
-```text
-.agents/plugins/marketplace.json
-plugins/openpencil/
-  plugin.json
-  mcp.json
-  scripts/{mcp-bridge,transport}.mjs
-  skills/{openpencil-setup,openpencil-design}/
-scripts/{check-package,smoke}.mjs
-tests/transport.test.mjs
-```
-
-The portable Agent Plugins manifest and `${PLUGIN_ROOT}` stdio launch follow
-[OpenAI's packaging guide](https://developers.openai.com/plugins/build/plugins)
-and [local MCP guide](https://developers.openai.com/plugins/deploy/desktop-only).
-
-MIT licensed. The node/layout reference is adapted from OpenPencil's bundled
-skill; see [NOTICE](NOTICE). This project is maintained by ZSeven-W and is not
-an OpenAI-authored plugin.
+MIT licensed; see [NOTICE](NOTICE). Maintained by ZSeven-W, not authored by OpenAI.

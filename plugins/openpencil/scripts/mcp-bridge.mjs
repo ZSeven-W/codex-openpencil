@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { once } from 'node:events';
 import { StringDecoder } from 'node:string_decoder';
-import { discover, errorReply, forward, MAX_BYTES, parsePort } from './transport.mjs';
+import { discover, errorReply, MAX_BYTES, parsePort } from './transport.mjs';
+import { CanvasController } from './canvas-controller.mjs';
 
 function optionsFromArgs(args) {
   const options = { port: process.env.OPENPENCIL_MCP_PORT };
@@ -20,10 +21,14 @@ async function write(reply) {
 }
 
 async function serve(options) {
+  const canvas = new CanvasController({ ...options,
+    onToolsChanged: () => write({ jsonrpc: '2.0', method: 'notifications/tools/list_changed' }) });
+  const shutdown = () => { process.stdin.destroy(); };
+  process.once('SIGTERM', shutdown); process.once('SIGINT', shutdown);
   const decoder = new StringDecoder('utf8');
   let buffer = '';
   // Serialize messages to preserve the ordering of canvas edits and notifications.
-  for await (const chunk of process.stdin) {
+  try { for await (const chunk of process.stdin) {
     buffer += decoder.write(chunk);
     let newline;
     while ((newline = buffer.indexOf('\n')) !== -1) {
@@ -34,12 +39,16 @@ async function serve(options) {
       let message;
       try { message = JSON.parse(line); }
       catch { await write(errorReply(null, -32700, 'Invalid JSON.')); continue; }
-      await write(await forward(message, options));
+      await write(await canvas.enqueue(() => canvas.dispatch(message)));
     }
     if (Buffer.byteLength(buffer) > MAX_BYTES) throw new Error('MCP input exceeds the size limit.');
   }
   buffer += decoder.end();
   if (buffer.trim()) await write(errorReply(null, -32700, 'MCP messages must end with a newline.'));
+  } finally {
+    process.off('SIGTERM', shutdown); process.off('SIGINT', shutdown);
+    await canvas.close();
+  }
 }
 
 try {

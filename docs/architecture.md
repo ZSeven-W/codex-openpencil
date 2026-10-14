@@ -1,51 +1,82 @@
 # Architecture and scope
 
 ```text
-Codex plugin host
-  -> bundled Node.js stdio bridge
-  -> discovery record + verified JSON-RPC ping
-  -> loopback Rust OpenPencil HTTP MCP
-  -> native editor state / selected file-backed host
+Codex plugin host -> Node.js stdio bridge -> one serialized controller
+  before open_canvas -> instance-verified existing Rust MCP editor
+  after open_canvas  -> owned managed Rust daemon -> shared document
+
+MCP Apps resource -> capability-protected loopback panel -> full Rust WASM editor
+                       Save/Save As/checkpoint              live sync
+                              |                              |
+                              +------ managed daemon --------+
 ```
 
-The plugin does not implement design tools itself. Tool discovery, schemas,
-calls, errors, and image blocks originate from the Rust server. The bridge only
-adapts newline-delimited stdio messages to the current Rust JSON HTTP transport.
-It intentionally does not support the retired TypeScript REST transport or an
-arbitrary remote MCP endpoint.
+The Rust engine owns native design tools, layouts, rendering, undo and live sync.
+The plugin adds `open_canvas`, `canvas_status`, `canvas_save` and app-only
+`canvas_checkpoint`. The complete editable engine is reused rather than the
+public read-only web SDK. Native images and JSON-RPC errors pass through.
 
-Discovery is performed for every message. Default discovery verifies both the
-server marker and the live instance token. Explicit local ports verify the
-server marker and are useful for isolated headless servers. No token is sent
-in diagnostic output. Redirects and proxy routing are not used.
+## Process and document ownership
 
-Messages are serialized to preserve edit order. Input and response sizes are
-bounded at 32 MiB. Identity probes have a 3-second deadline; requests have a
-120-second deadline. No failed request is replayed automatically. A disconnect
-or timeout is ambiguous for a mutation; inspect state before deciding to repeat.
-Server JSON-RPC errors and MCP image blocks are passed through unchanged.
+Reading the UI resource starts only a lightweight panel server; it never switches
+the active document. Opening a canvas verifies every runtime manifest SHA-256
+entry, platform and release. The daemon launches with `--serve-web --managed
+--port 0` on a recovery copy, its own supervisor lease and settings root. The
+bounded handshake must match the bundle version. Rust acquisition is separate.
 
-The editor is a prerequisite. Starting it automatically would introduce process
-ownership, download/install policy, and document-selection behavior, so the setup
-skill handles that explicitly. Tool discovery needs a reachable server at chat
-startup. This package uses no lifecycle hooks and makes no global MCP config
-changes of its own.
+While managed, all native tools route to the owned daemon; browser edits and
+Codex therefore share a document. `save_document` uses the guarded save. One
+conversation cannot silently replace its canvas with another file. On EOF or
+shutdown, the bridge checkpoints and stops only its own child. Recovery drafts
+persist; reopen them in a new chat after a stopped session.
 
-## Host boundaries
+Before opening a canvas, desktop discovery verifies the `openpencil-mcp` marker
+and live instance token for each request. Explicit loopback ports verify the
+marker. Stale records, redirects, legacy REST and unrelated listeners are rejected.
+No failed mutation is replayed automatically.
 
-- `ZSeven-W/openpencil`: Rust engine, tool schemas, rendering and `.op` persistence.
-- `ZSeven-W/codex-openpencil`: plugin distribution, local bridge and Codex workflows.
-- `ZSeven-W/dsh-openpencil`: DSH cards, interactive previews and managed runtimes.
+## UI and persistence contract
 
-## Follow-up work
+`ui://openpencil/canvas/v0.2.html` is `text/html;profile=mcp-app`. `open_canvas`
+advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
+negotiates `ui/initialize`, handles tool results and sends selection context when
+supported. Its CSP permits only this panel's exact origin. The panel checks an
+opaque 256-bit URL capability, Host and Origin, and accepts only three controls.
+The iframe lifecycle token stays in private UI state, outside model-facing text.
+Editor messages require the exact frame source and origin. No global MCP config
+or anonymous browser is created.
 
-1. Validate a clean desktop plugin install with Node/editor absent and present.
-2. Assess Codex-supported MCP UI resources before implementing embedded previews.
-   A browser panel or PNG alone is not the DSH interactive-canvas experience.
-3. Package editor acquisition/launch only after choosing process ownership and
-   update behavior. Keep that independent of design tool implementation.
-4. Public directory submission is a separate release action. Local stdio MCP
-   submission currently requires an allowlisted OpenAI partner, as documented in
-   [desktop-only plugins](https://developers.openai.com/plugins/deploy/desktop-only).
+The panel flushes the editor snapshot gate before Save. The controller compares
+that disk snapshot to the daemon's document, resolving only schema-owned image
+references and checking page/geometry metadata. Text, variables and free-form
+state are never normalized away. Stale snapshots stop the save. Saved UI snapshots
+retain compact images and editor metadata; native saves and recovery checkpoints
+preserve daemon page/geometry metadata.
 
-Repo/CLI marketplace distribution does not imply public directory approval.
+Existing sources are SHA-256 checked before staging and again before atomic
+replacement. Save As creates exclusively and refuses an existing destination.
+A later edit keeps the UI dirty when an earlier save completes. Source conflicts
+preserve external content and recovery drafts. These checks are not a distributed
+lock against an external write between the final check and rename. Model-triggered
+Save uses the daemon snapshot; use the UI Save button to explicitly flush pending
+interactive edits first.
+
+Stdio and panel controls share an ordered queue. Reads/requests are bounded at
+32 MiB. Identity probes have a 3-second deadline, normal MCP requests 120 seconds,
+startup 20 seconds and UI saves 15 seconds. A timeout never retries an edit.
+
+## Ownership and validation boundaries
+
+- `ZSeven-W/openpencil`: Rust engine, schemas, renderer and persistence.
+- `ZSeven-W/codex-openpencil`: plugin, session adapter, UI and workflows.
+- `ZSeven-W/dsh-openpencil`: DSH integration and compatible runtime packaging.
+
+Native tool/resource loading, browser interaction and Codex desktop MCP Apps
+presentation are separate checks. Consult [validation](validation.md). A browser
+panel alone does not prove embedded presentation. Runtime acquisition, clean-machine
+onboarding and public directory submission remain separate work; there are no
+install hooks.
+
+The UI follows [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)
+and [OpenAI UI extensions](https://developers.openai.com/plugins/build/chatgpt-ui).
+Repo marketplace distribution does not imply public directory approval.

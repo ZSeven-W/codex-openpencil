@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;min-height:600px;background:#f6f5f0;font:14px sans-serif}iframe{border:0;width:100%;height:100vh;min-height:600px;display:block}#notice{padding:20px;color:#655d41}</style></head><body><div id="notice" role="status">连接 OpenPencil 画布…</div><iframe id="panel" title="OpenPencil Canvas" hidden allow="clipboard-read; clipboard-write; local-fonts"></iframe><script>
+const pending = new Map(); let nextId = 1, panelOrigin, hostCapabilities = {}, opened = false;
+const frame = document.getElementById('panel'), notice = document.getElementById('notice');
+function request(method, params) {
+  const id = `canvas-${nextId++}`;
+  return new Promise((resolve,reject) => {
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error('插件连接超时，请重新打开画布。')); }, 20000);
+    pending.set(id,{resolve,reject,timer}); window.parent.postMessage({jsonrpc:'2.0',id,method,params},'*');
+  });
+}
+function show(result) {
+  if (result?.isError) { notice.hidden = false; notice.textContent = result.content?.[0]?.text || '画布未打开'; return; }
+  const raw = result?.structuredContent?.panelUrl;
+  if (!raw || opened) return;
+  let url; try { url = new URL(raw); } catch { return; }
+  if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !/^\/canvas\/[A-Za-z0-9_-]{43}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) return;
+  opened = true; panelOrigin = url.origin; frame.src = url.href; frame.hidden = false; notice.hidden = true;
+}
+window.addEventListener('message',event => {
+  if (event.source === frame.contentWindow && event.origin === panelOrigin && event.data?.type === 'codex-canvas/context') {
+    if (hostCapabilities.updateModelContext) request('ui/update-model-context',{content:[{type:'text',text:JSON.stringify({canvasFile:event.data.filePath,selection:event.data.selection})}]}).catch(()=>{});
+    return;
+  }
+  if (event.source !== window.parent || event.data?.jsonrpc !== '2.0') return;
+  const message = event.data;
+  if (pending.has(message.id)) { const p=pending.get(message.id);clearTimeout(p.timer);pending.delete(message.id);message.error?p.reject(new Error(message.error.message)):p.resolve(message.result); }
+  if (message.method === 'ui/notifications/tool-result') show(message.params);
+  if (message.method === 'ping') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
+  if (message.method === 'ui/resource-teardown') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
+});
+(async()=>{
+  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.2.0'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
+  hostCapabilities=initialized.hostCapabilities||{};
+  window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized',params:{}},'*');
+  // Entrypoints send {}; reopening never replaces this conversation's active document.
+  if (hostCapabilities.serverTools) show(await request('tools/call',{name:'open_canvas',arguments:{}}));
+})().catch(error=>{notice.textContent=error.message;});
+</script></body></html>

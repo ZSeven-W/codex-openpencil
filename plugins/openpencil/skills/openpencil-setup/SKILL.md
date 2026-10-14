@@ -5,8 +5,29 @@ description: Connect and diagnose the local Rust OpenPencil editor for the Codex
 
 # Connect OpenPencil
 
-The plugin bridges MCP stdio to the running Rust editor's loopback `/mcp`
-endpoint. It does not bundle the editor or automatically launch a process.
+The plugin opens a managed interactive Rust canvas or connects to an existing
+desktop editor. It does not bundle or automatically download Rust binaries.
+
+## Interactive canvas
+
+1. For a requested conversation canvas, call `open_canvas`, optionally with the
+   user's existing absolute `.op` path. The source is copied into a recovery draft.
+2. If the runtime is missing, configure an existing complete runtime package from
+   the repo with `npm run configure-runtime -- /absolute/runtime/root`, or set
+   `OPENPENCIL_EDITOR_RUNTIME_DIR` in the MCP process environment. It needs
+   `openpencil-runtime.json`, the web server, matching editable WASM and CanvasKit.
+   A read-only SDK or desktop binary alone is insufficient. Configuration stays
+   private in `~/.codex-openpencil/runtime.json`; never commit machine paths.
+3. Use the UI resource/thread entrypoint, or show the returned local `panelUrl`
+   in hosts without MCP Apps. Verify `canvas_status` and `get_editor_state`:
+   they must describe the same managed document before editing.
+4. Each conversation keeps one canvas. Use another chat for a different document.
+   Recovery drafts survive in `~/.codex-openpencil/sessions/`. A stopped session's
+   URL is temporary; reopen its recovery file in a new session.
+5. Reconnect or open a new chat after upgrading the plugin. Resource loading and
+   visibly displayed embedded host UI are separate verification steps.
+
+## Existing desktop editor
 
 1. Try `get_editor_state` through this plugin's OpenPencil tools. A response proves
    the actual connection; an installed package alone does not.
@@ -30,5 +51,6 @@ A stale identity error requires reopening the intended editor or fixing its MCP
 setting. The bridge refuses to silently fall back to a different canvas. Keep
 discovery tokens out of chat, logs, committed files, and reports.
 
-This version offers native MCP tools and PNG previews in chat. It does not
-implement the DSH embedded interactive canvas or managed-editor tool card.
+After `open_canvas`, all native tools target that managed session instead of the
+discovered desktop editor. Report the target before edits; never silently take
+over a different document.

@@ -10,6 +10,12 @@ Use the connected Rust MCP tools as the source of truth. Start with
 content and use the user's chosen file, page, selection, and reference.
 For connection failures, see [setup](../openpencil-setup/SKILL.md).
 
+For a requested interactive conversation canvas, call `open_canvas` with the
+chosen existing file or without a path for a new document. Verify `canvas_status`
+and `get_editor_state`. All native tools then edit that managed canvas. Show the
+UI resource or local panel URL. Do not open a new managed document just to inspect
+the user's existing desktop selection.
+
 ## Establish the output
 
 For a new design, resolve **one page or multiple pages** explicitly if the brief
@@ -48,13 +54,17 @@ Reuse the document's variables, components, and style before inventing new ones.
 2. Render affected roots with `get_screenshot` and actually view the image.
    Check copy, hierarchy, spacing, colors, and reference fidelity. If rendering
    is unavailable, report that limit rather than claiming a visual pass.
-3. For requested persistence, call `save_document` with the intended absolute
+3. For managed interactive persistence, the panel Save button flushes pending
+   browser edits. `canvas_save` and intercepted `save_document` save the daemon's
+   current snapshot; verify pending edits have synced before calling them. Save
+   As requires a new path; source conflicts stop saves and retain recovery drafts.
+   For an existing desktop editor, call `save_document` with the intended absolute
    `.op` path. Read/reopen the saved file to verify page count and key nodes.
    Avoid overwriting unrelated files or changing the active canvas just to test.
 4. Return clickable absolute file links and local image previews where available.
    Distinguish changes on canvas, saved artifacts, visual QA, and publication.
    Saving a design does not authorize publishing or submitting it externally.
 
-Use the native editor or browser editor for interactive editing. Do not describe
+Use the managed panel, native editor or browser editor for interactive editing. Do not describe
 a PNG preview as an embedded interactive canvas. Export to code only when the
 user asks, using the live server's supported frameworks.
