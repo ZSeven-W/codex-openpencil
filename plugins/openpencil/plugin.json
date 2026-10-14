@@ -1,0 +1,32 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "openpencil",
+  "version": "0.1.0",
+  "description": "Create, inspect, preview, and save editable OpenPencil designs with Codex.",
+  "author": { "name": "ZSeven-W", "url": "https://github.com/ZSeven-W" },
+  "repository": "https://github.com/ZSeven-W/codex-openpencil",
+  "homepage": "https://github.com/ZSeven-W/codex-openpencil",
+  "license": "MIT",
+  "keywords": ["openpencil", "design", "codex", "mcp"],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "onboardingSkill": "./skills/openpencil-setup/SKILL.md",
+      "interface": {
+        "displayName": "OpenPencil",
+        "shortDescription": "Design editable UI on your local OpenPencil canvas",
+        "longDescription": "Connect Codex to the Rust OpenPencil editor. Build and refine vector UI, inspect layout, preview images, and save .op documents. Requires Node.js 22+ and a running local OpenPencil MCP server.",
+        "developerName": "ZSeven-W",
+        "category": "Design",
+        "capabilities": ["Design UI", "Inspect layout", "Preview designs", "Save .op files"],
+        "websiteURL": "https://github.com/ZSeven-W/codex-openpencil",
+        "defaultPrompt": [
+          "Connect to my local OpenPencil editor.",
+          "Create a single-page dashboard in OpenPencil.",
+          "Inspect and refine the selected OpenPencil frame."
+        ],
+        "brandColor": "#CFB537"
+      }
+    }
+  }
+}

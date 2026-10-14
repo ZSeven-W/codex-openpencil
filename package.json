@@ -1,0 +1,15 @@
+{
+  "name": "@zseven-w/codex-openpencil",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenPencil design workflows and a local MCP bridge for Codex",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check-package.mjs",
+    "doctor": "node plugins/openpencil/scripts/mcp-bridge.mjs --doctor",
+    "smoke": "node scripts/smoke.mjs"
+  }
+}
