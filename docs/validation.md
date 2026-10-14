@@ -42,7 +42,14 @@ creation, readback, layout inspection, lint, native PNG rendering, save, and reo
 Local artifacts are intentionally ignored by Git. Run the smoke command to
 reproduce them on a machine with a compatible Rust host.
 
-CI is configured for Node.js 22/24 on Linux, macOS and Windows. The local result
-above does not assert a completed CI run or an installed desktop UI workflow.
+## Cross-platform CI
+
+[CI run #2](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38529138631)
+passed all six jobs for Node.js 22/24 on Linux, macOS and Windows at commit
+`14d27a5`. Each job ran package checks and all 14 protocol tests. Windows exposed
+a CRLF compatibility issue in the skill validator; the fix also passed an
+isolated checkout converted entirely to CRLF before it was pushed.
+
+These results do not assert a completed desktop UI workflow.
 Clean-machine installation, absent-runtime onboarding, embedded interactive
 canvas, and public-directory submission remain separate validation/release work.
