@@ -36,7 +36,8 @@ async function scan(dir) {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) await scan(path);
     else {
-      const body = await readFile(path, 'utf8');
+      // Git may check text out with CRLF on Windows; validate content, not line endings.
+      const body = (await readFile(path, 'utf8')).replace(/\r\n/g, '\n');
       assert.ok(!body.includes('/Users/fini/'), `Machine path in ${path}`);
       assert.ok(body.split('\n').length <= 800, `File exceeds 800 lines: ${path}`);
       if (entry.name === 'SKILL.md') {
