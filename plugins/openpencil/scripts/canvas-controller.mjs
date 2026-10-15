@@ -82,7 +82,7 @@ export class CanvasController {
       const upstream = this.session ? await this.session.forward(message) : await forward(message, this.options);
       if (!Object.hasOwn(message, 'id')) return null;
       if (message.method === 'initialize') {
-        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.2.0' } };
+        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.0' } };
         result.capabilities = { ...result.capabilities, tools: { listChanged: true }, resources: {} };
         return reply(result);
       }

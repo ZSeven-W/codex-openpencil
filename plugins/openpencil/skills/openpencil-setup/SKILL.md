@@ -6,18 +6,24 @@ description: Connect and diagnose the local Rust OpenPencil editor for the Codex
 # Connect OpenPencil
 
 The plugin opens a managed interactive Rust canvas or connects to an existing
-desktop editor. It does not bundle or automatically download Rust binaries.
+desktop editor. First canvas use automatically downloads the matching complete
+runtime from pinned public GitHub Release assets and validates its SHA-256,
+payload manifest, version and platform before configuring or starting it.
 
 ## Interactive canvas
 
 1. For a requested conversation canvas, call `open_canvas`, optionally with the
    user's existing absolute `.op` path. The source is copied into a recovery draft.
-2. If the runtime is missing, configure an existing complete runtime package from
-   the repo with `npm run configure-runtime -- /absolute/runtime/root`, or set
-   `OPENPENCIL_EDITOR_RUNTIME_DIR` in the MCP process environment. It needs
-   `openpencil-runtime.json`, the web server, matching editable WASM and CanvasKit.
-   A read-only SDK or desktop binary alone is insufficient. Configuration stays
-   private in `~/.codex-openpencil/runtime.json`; never commit machine paths.
+2. Missing runtime configuration triggers installation automatically. Allow the
+   initial download to finish; do not repeatedly call `open_canvas` after a host
+   timeout. For preflight or a slow connection, run
+   `node scripts/runtime-install.mjs` from the installed plugin directory, then
+   call `open_canvas`. Failed downloads do not configure partial runtimes.
+   Existing invalid configurations are reported without switching runtimes.
+   Configuration stays private in `~/.codex-openpencil/runtime.json`.
+   A complete custom package can be selected with
+   `OPENPENCIL_EDITOR_RUNTIME_DIR`; it needs a matching native server, editable
+   WASM, CanvasKit and integrity manifest. A desktop binary alone is insufficient.
 3. Use the UI resource/thread entrypoint, or show the returned local `panelUrl`
    in hosts without MCP Apps. Verify `canvas_status` and `get_editor_state`:
    they must describe the same managed document before editing.
@@ -26,6 +32,15 @@ desktop editor. It does not bundle or automatically download Rust binaries.
    URL is temporary; reopen its recovery file in a new session.
 5. Reconnect or open a new chat after upgrading the plugin. Resource loading and
    visibly displayed embedded host UI are separate verification steps.
+
+For a new install, follow the public repository's
+[INSTALL.md](https://github.com/ZSeven-W/codex-openpencil/blob/main/INSTALL.md).
+Its `npm run setup` verifies an isolated native edit/save/reopen before installing
+the plugin. If this chat has not loaded newly installed MCP tools yet,
+`npm run canvas` in the repository provides the same editable canvas and accepts
+native tool requests through a persistent terminal's stdin. Use that entry point
+to complete the design now, then explain that reconnect loads the installed tools.
+Never mistake a successful install for a verified live canvas.
 
 ## Existing desktop editor
 

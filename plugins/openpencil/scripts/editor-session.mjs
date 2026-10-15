@@ -2,7 +2,8 @@ import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, writeFile, rename, lstat, rm } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join } from 'node:path';
-import { resolveRuntime, stateRoot, sha256 } from './editor-runtime.mjs';
+import { stateRoot, sha256 } from './editor-runtime.mjs';
+import { ensureRuntime } from './runtime-install.mjs';
 import { post } from './transport.mjs';
 import { snapshotMatches, diskDocument } from './document-format.mjs';
 
@@ -72,7 +73,7 @@ function handshake(child) {
 
 export class EditorSession {
   static async start({ filePath, allowOrigin, runtimeRoot }) {
-    const runtime = await resolveRuntime(runtimeRoot);
+    const runtime = await ensureRuntime(runtimeRoot);
     await mkdir(join(stateRoot(), 'sessions'), { recursive: true, mode: 0o700 });
     const dir = await mkdtemp(join(stateRoot(), 'sessions', 'canvas-'));
     const draft = join(dir, 'recovery.op');

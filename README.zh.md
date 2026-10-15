@@ -1,25 +1,34 @@
 # Codex OpenPencil
 
-v0.2.0 已加入真实可编辑画布，复用完整 Rust OpenPencil 编辑器。
-交互操作与 Codex 的 MCP 修改使用同一份文档，支持图层、选择、文字与形状编辑、
-平移缩放、保存和恢复草稿。
+v0.3.0 支持自动下载运行环境和首次启动验证。完整 Rust 编辑器、对应 WASM、
+CanvasKit、字体与模板按当前系统和 CPU 安装，无需 DSH、Rust 编译器或独立桌面端。
 
-## 安装与启动
+## 一句话安装并开始设计
 
-需要本地 Node.js 22+、支持插件市场的新版 Codex，以及完整 Rust 编辑器运行包。
+把这句话发给 Codex：
+
+> 按照 https://github.com/ZSeven-W/codex-openpencil 的 INSTALL.md 帮我安装并配置 OpenPencil，打开可编辑画布，做一个单页手机任务管理 APP。
+
+[安装指南](INSTALL.md) 会引导 Codex 检查前置依赖、安装插件、下载并校验运行包，
+再通过独立文档验证真实编辑、保存与重新打开。新插件工具若需要重连才生效，
+Codex 可先通过终端画布入口在当前聊天完成设计，并明确说明当前使用的入口。
+
+需要本地 Node.js 22+、Git 和支持插件的新版本 Codex。安装过程不需要 GitHub
+账号或 API Key。支持 macOS、Windows、Linux 的 ARM64 与 x64；Linux 需要 glibc
+和 fontconfig / FreeType，具体系统要求见[兼容性表](INSTALL.md#supported-runtime-builds)。
+
+手动安装也只需：
 
 ```sh
-git clone git@github.com:ZSeven-W/codex-openpencil.git
+git clone https://github.com/ZSeven-W/codex-openpencil.git
 cd codex-openpencil
-codex plugin marketplace add .
-codex plugin add openpencil@zseven-openpencil
-npm run configure-runtime -- /absolute/path/to/runtime
+npm run setup
 ```
 
-运行包须包含 `openpencil-runtime.json`、Rust Web 服务、对应版本的可编辑 WASM
-和 CanvasKit。可以复用 DSH 插件的完整运行包，无需启动 DSH；只读 Web SDK 不能
-代替编辑器。配置写入本机私有的 `~/.codex-openpencil/runtime.json`，不打包绝对
-路径。启动前校验全部文件哈希、平台和版本，不自动下载运行包。
+首次 `open_canvas` 也会自动安装缺失的运行环境。安装前校验发布包 SHA-256，
+启动前校验全部运行文件的哈希、平台与版本；失败下载不会写入有效配置。
+已有的有效自定义运行环境会保留，配置异常时明确报错，不自动切换。
+配置保存在私有的 `~/.codex-openpencil/runtime.json`。
 
 安装或更新后重新连接插件或新建聊天，然后提出：
 

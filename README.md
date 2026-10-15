@@ -4,41 +4,50 @@ Design editable vector UI with Codex and the local Rust [OpenPencil](https://git
 
 [中文说明](README.zh.md) · [Architecture](docs/architecture.md) · [Validation](docs/validation.md)
 
-v0.2.0 adds the complete interactive Rust canvas, an MCP Apps UI resource and
-Codex thread entrypoint. Interactive edits and Codex tools share one document.
-The plugin has no npm runtime dependencies and requires Node.js 22+ and a recent
-Codex client with plugin marketplace support.
+v0.3.0 adds automatic runtime installation and a verified first-run setup.
+The complete Rust editor, matching WASM, CanvasKit, fonts and templates download
+for the current OS/CPU. No DSH, Rust compiler or separate desktop app is needed.
+The plugin has no npm runtime dependencies; Node.js 22+, Git and a recent local
+Codex client with plugin support are required.
 
-## Install
+## One-prompt install and first design
+
+Give Codex this:
+
+> Install and set up https://github.com/ZSeven-W/codex-openpencil following its INSTALL.md, open an editable canvas, and create a single-page mobile task app.
+
+[INSTALL.md](INSTALL.md) guides the agent through prerequisites, public HTTPS
+installation, runtime integrity checks, an isolated native edit/save/reopen,
+and opening the real canvas. Newly installed tools may need a plugin reconnect;
+the terminal canvas entry point lets the agent finish the design in the current
+chat. This distinction is reported explicitly.
+
+## Manual install
 
 ```sh
-git clone git@github.com:ZSeven-W/codex-openpencil.git
+git clone https://github.com/ZSeven-W/codex-openpencil.git
 cd codex-openpencil
-codex plugin marketplace add .
-codex plugin add openpencil@zseven-openpencil
+npm run setup
 ```
 
-The marketplace can also be added directly with
-`codex plugin marketplace add ZSeven-W/codex-openpencil` if you have repository
-access. Clients without `plugin add` can use the desktop Plugins Directory.
-Reconnect the plugin or open a new chat to load its installed skills and tools.
+Setup registers the persistent checkout and installs `openpencil@zseven-openpencil`.
+First use also installs a missing runtime automatically. All six macOS/Windows/
+Linux CPU builds are listed in [INSTALL.md](INSTALL.md#supported-runtime-builds).
+Linux uses glibc and needs fontconfig/FreeType system libraries.
 
-## Interactive canvas
-
-Configure an existing complete Rust editor runtime:
+Existing valid custom runtimes are preserved. To select one explicitly:
 
 ```sh
 npm run configure-runtime -- /absolute/path/to/runtime
 ```
 
-It must contain `openpencil-runtime.json`, `bin/op-host-web-server` (with `.exe`
-on Windows), the matching editable WASM bundle and CanvasKit assets. The DSH
-plugin's complete runtime package can be reused; DSH itself is not required.
-The public read-only web SDK or a desktop binary alone is insufficient. Every
-manifest hash, platform and release is verified before launching. Runtime
-acquisition is not automated. The location is saved privately in
-`~/.codex-openpencil/runtime.json`, never in the plugin. Alternatively set
-`OPENPENCIL_EDITOR_RUNTIME_DIR` in the MCP process environment.
+Private runtime settings stay in `~/.codex-openpencil/runtime.json`. Neither
+machine paths nor downloaded binaries are stored in the plugin package. Both
+the archive SHA-256 and every manifest file are checked before use. A failed
+download leaves no active partial runtime. Invalid existing configuration is
+reported without silently changing the selected editor.
+
+## Interactive canvas
 
 After reconnecting or opening a new chat, ask:
 

@@ -1,13 +1,21 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "openpencil",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Create, inspect, preview, and save editable OpenPencil designs with Codex.",
-  "author": { "name": "ZSeven-W", "url": "https://github.com/ZSeven-W" },
+  "author": {
+    "name": "ZSeven-W",
+    "url": "https://github.com/ZSeven-W"
+  },
   "repository": "https://github.com/ZSeven-W/codex-openpencil",
   "homepage": "https://github.com/ZSeven-W/codex-openpencil",
   "license": "MIT",
-  "keywords": ["openpencil", "design", "codex", "mcp"],
+  "keywords": [
+    "openpencil",
+    "design",
+    "codex",
+    "mcp"
+  ],
   "extensions": {
     "com.openai": {
       "requires_local_executor": true,
@@ -15,10 +23,16 @@
       "interface": {
         "displayName": "OpenPencil",
         "shortDescription": "Design editable UI on your local OpenPencil canvas",
-        "longDescription": "Open a complete editable Rust canvas for your conversation, or connect to your existing editor. Interactive edits and Codex tools share one document, with guarded saves and recovery drafts. Requires Node.js 22+ and a configured complete Rust runtime for the canvas, or a running desktop MCP server.",
+        "longDescription": "Open an editable Rust canvas for your conversation. The matching native editor, WASM and CanvasKit runtime downloads automatically on first use and is verified before launch. Interactive edits and Codex tools share one document, with selection prompts, guarded saves and recovery drafts. Requires Node.js 22+ and a local executor.",
         "developerName": "ZSeven-W",
         "category": "Design",
-        "capabilities": ["Interactive canvas", "Design UI", "Inspect layout", "Preview designs", "Save .op files"],
+        "capabilities": [
+          "Interactive canvas",
+          "Design UI",
+          "Inspect layout",
+          "Preview designs",
+          "Save .op files"
+        ],
         "websiteURL": "https://github.com/ZSeven-W/codex-openpencil",
         "defaultPrompt": [
           "Open an interactive OpenPencil canvas for this conversation.",

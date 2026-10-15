@@ -53,6 +53,7 @@ export async function extractArchive(compressed, destination) {
     await mkdir(dirname(path), { recursive: true, mode: 0o700 });
     await writeFile(path, bytes, { flag: 'wx', mode: name.startsWith('bin/op-host-web-server') ? 0o755 : 0o644 });
   }
+  return [...files.keys()];
 }
 
 export function packArchive(files) {
