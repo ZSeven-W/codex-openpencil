@@ -22,6 +22,11 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    distributions. Preserve existing Codex settings, models and unrelated MCP servers.
    The plugin's local executor needs `node` on PATH. Linux also needs fontconfig
    and FreeType runtime libraries (`libfontconfig1` and `libfreetype6` on Ubuntu).
+   Windows needs the matching [Microsoft Visual C++ v14 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist).
+   The native package imports `MSVCP140.dll` and `VCRUNTIME140.dll`; check that the
+   matching runtime is installed and install Microsoft's signed package if absent.
+   These are system prerequisites the installing agent should resolve before
+   proceeding, rather than asking the user to find a Rust binary manually.
 2. Clone the public repository over HTTPS into a persistent, user-owned location.
    Do not overwrite another checkout or choose a temporary installation directory.
    For an existing checkout, inspect local changes before updating it.

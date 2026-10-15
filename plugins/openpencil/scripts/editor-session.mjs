@@ -50,7 +50,9 @@ function handshake(child) {
   return new Promise((resolve, reject) => {
     let buffer = '';
     const timer = setTimeout(() => finish(new Error('Rust editor startup timed out.')), 20_000);
-    const onExit = () => finish(new Error('Rust editor exited before its handshake.'));
+    const onExit = code => finish(new Error(process.platform === 'win32' && [0xc0000135, 0xc000007b].includes(code >>> 0)
+      ? 'Rust editor needs the matching Microsoft Visual C++ v14 Redistributable. Install it from Microsoft, then run setup again.'
+      : 'Rust editor exited before its handshake.'));
     const onData = (bytes) => {
       buffer += bytes.toString('utf8');
       if (buffer.length > 16_384) return finish(new Error('Rust editor handshake exceeded its limit.'));
