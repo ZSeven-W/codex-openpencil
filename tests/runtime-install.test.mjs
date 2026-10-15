@@ -43,7 +43,8 @@ test('Clean state downloads, checks, configures and reuses a complete immutable 
   const state = await temporary(t), opts = options(state);
   const runtime = await ensureRuntime(undefined, opts);
   assert.equal(runtime.version, '0.8.5'); assert.equal(opts.count(), 1);
-  assert.deepEqual(JSON.parse(await readFile(join(state, 'runtime.json'))), { root: runtime.root });
+  assert.deepEqual(JSON.parse(await readFile(join(state, 'runtime.json'))),
+    { root: runtime.root, source: 'release', release: opts.catalog.release, platform });
   assert.equal((await resolveRuntime(runtime.root)).binary, runtime.binary);
   assert.equal((await ensureRuntime(undefined, opts)).root, runtime.root);
   assert.equal((await installRuntime(opts)).root, runtime.root);
@@ -137,4 +138,27 @@ test('A custom valid runtime is preserved when checking readiness', async t => {
   const opts = options(state);
   assert.equal((await ensureRuntime(undefined, opts)).root, custom.root);
   assert.equal(opts.count(), 0);
+});
+
+test('Managed release upgrades activate only after validation and retain the previous runtime', async t => {
+  const state = await temporary(t), first = await installRuntime(options(state));
+  const upgraded = fixture(m => { m.openPencilRevision = 'b'.repeat(40); });
+  upgraded.catalog.openPencilRevision = 'b'.repeat(40); upgraded.catalog.release = 'runtime-v0.8.5-next';
+  const configBefore = await readFile(join(state, 'runtime.json'), 'utf8');
+  await assert.rejects(ensureRuntime(undefined, { ...options(state, upgraded), fetchImpl: async () => { throw Error('offline'); } }), /offline/);
+  assert.equal(await readFile(join(state, 'runtime.json'), 'utf8'), configBefore);
+  const next = await ensureRuntime(undefined, options(state, upgraded));
+  assert.notEqual(next.root, first.root);
+  assert.equal((await resolveRuntime(first.root)).version, '0.8.5');
+  assert.equal(JSON.parse(await readFile(join(state, 'runtime.json'))).release, upgraded.catalog.release);
+});
+
+test('A cached package from the wrong revision is rejected before changing configuration', async t => {
+  const state = await temporary(t), opts = options(state), runtime = await installRuntime(opts);
+  const path = join(runtime.root, 'openpencil-runtime.json');
+  const manifest = JSON.parse(await readFile(path)); manifest.openPencilRevision = 'b'.repeat(40);
+  await writeFile(path, JSON.stringify(manifest));
+  await assert.rejects(installRuntime(opts), /pinned release/);
+  await assert.rejects(ensureRuntime(undefined, opts), /pinned release/);
+  assert.equal(opts.count(), 1);
 });

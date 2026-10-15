@@ -112,6 +112,8 @@ platforms fail explicitly; the installer never substitutes a different binary.
 - `npm run configure-runtime -- /absolute/complete/runtime` selects a custom
   runtime. An existing valid choice is preserved by normal setup and first use.
 - To update, inspect the checkout, pull the published changes and rerun setup.
+  Managed downloads follow the new pinned release; valid custom runtimes remain
+  selected. An interrupted upgrade retains the previous runtime and configuration.
   Reconnect the installed plugin afterward. Do not delete unrelated settings.
 
 Runtime downloads use this repository's pinned GitHub Release assets. Private

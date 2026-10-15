@@ -18,12 +18,12 @@ export function assertSupportedLibc(platform, glibc) {
   }
 }
 
-export async function configureRuntime(root, state = stateRoot()) {
+export async function configureRuntime(root, state = stateRoot(), metadata = {}) {
   const runtime = await resolveRuntime(root);
   await mkdir(state, { recursive: true, mode: 0o700 });
   const temporary = join(state, `.runtime-${randomUUID()}.json`);
   try {
-    await writeFile(temporary, JSON.stringify({ root: runtime.root }) + '\n', { flag: 'wx', mode: 0o600 });
+    await writeFile(temporary, JSON.stringify({ ...metadata, root: runtime.root }) + '\n', { flag: 'wx', mode: 0o600 });
     await rename(temporary, join(state, 'runtime.json'));
   } finally { await rm(temporary, { force: true }); }
   return runtime;
@@ -81,17 +81,22 @@ async function install({ state, platform, catalog, entry, fetchImpl = fetchRunti
   try { await lstat(destination); exists = true; }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   // A damaged cache is reported; do not delete a user's runtime to hide it.
-  if (exists) return configureRuntime(destination, state);
+  const metadata = { source: 'release', release: catalog.release, platform };
+  const validateRelease = async path => {
+    const manifest = JSON.parse(await readFile(join(path, 'openpencil-runtime.json'), 'utf8'));
+    if (manifest.openPencilRevision !== catalog.openPencilRevision || manifest.openPencilVersion !== catalog.openPencilVersion || manifest.platform !== platform) {
+      throw new Error('Downloaded or cached runtime does not match the pinned release.');
+    }
+    await resolveRuntime(path);
+    return manifest;
+  };
+  if (exists) { await validateRelease(destination); return configureRuntime(destination, state, metadata); }
   const staging = await mkdtemp(join(directory, '.install-'));
   try {
     progress(`Installing OpenPencil ${catalog.openPencilVersion} for ${platform}…`);
     const url = `https://github.com/ZSeven-W/codex-openpencil/releases/download/${catalog.release}/${entry.asset}`;
     const names = await extractArchive(await download(entry, url, fetchImpl, progress), staging);
-    const manifest = JSON.parse(await readFile(join(staging, 'openpencil-runtime.json'), 'utf8'));
-    if (manifest.openPencilRevision !== catalog.openPencilRevision || manifest.openPencilVersion !== catalog.openPencilVersion || manifest.platform !== platform) {
-      throw new Error('Downloaded runtime does not match the pinned release.');
-    }
-    await resolveRuntime(staging);
+    const manifest = await validateRelease(staging);
     if (names.some(name => name !== 'openpencil-runtime.json' && !Object.hasOwn(manifest.files, name))) {
       throw new Error('Runtime archive contains files absent from its integrity manifest.');
     }
@@ -99,9 +104,9 @@ async function install({ state, platform, catalog, entry, fetchImpl = fetchRunti
     catch (error) {
       if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(error.code)) throw error;
       // Another process may have completed the same immutable runtime first.
-      await resolveRuntime(destination);
+      await validateRelease(destination);
     }
-    const runtime = await configureRuntime(destination, state);
+    const runtime = await configureRuntime(destination, state, metadata);
     progress('Runtime verified and configured.');
     return runtime;
   } finally { await rm(staging, { force: true, recursive: true }); }
@@ -118,6 +123,10 @@ export async function ensureRuntime(root, options = {}) {
     return installRuntime({ ...options, state });
   }
   if (typeof config.root !== 'string' || !isAbsolute(config.root)) throw new Error('Invalid runtime configuration: expected an absolute runtime root.');
+  if (config.source === 'release') {
+    const catalog = options.catalog ?? JSON.parse(await readFile(catalogPath, 'utf8'));
+    return installRuntime({ ...options, state, catalog });
+  }
   return resolveRuntime(config.root);
 }
 
