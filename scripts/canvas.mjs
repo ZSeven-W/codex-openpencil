@@ -1,5 +1,6 @@
 import { createInterface } from 'node:readline';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { writeFile } from 'node:fs/promises';
 import { CanvasController } from '../plugins/openpencil/scripts/canvas-controller.mjs';
 
 const args = process.argv.slice(2);
@@ -20,7 +21,29 @@ try {
       if (request.quit === true) break;
       const message = request.method ? { ...request, jsonrpc: '2.0', id: ++id }
         : { jsonrpc: '2.0', id: ++id, method: 'tools/call', params: { name: request.name, arguments: request.arguments || {} } };
-      console.log(JSON.stringify(await controller.enqueue(() => controller.dispatch(message))));
+      const reply = await controller.enqueue(() => controller.dispatch(message));
+      const imagePaths = new Map();
+      for (const [index, item] of (reply?.result?.content || []).entries()) {
+        const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[item.mimeType];
+        if (item.type !== 'image' || !extension || typeof item.data !== 'string') continue;
+        const path = join(controller.session.dir, `preview-${id}-${index}.${extension}`);
+        await writeFile(path, Buffer.from(item.data, 'base64'), { flag: 'wx', mode: 0o600 });
+        imagePaths.set(item.data, path);
+        // Terminal callers can inspect the native image file instead of receiving
+        // megabytes of base64 that would be truncated by their shell tool.
+        reply.result.content[index] = { type: 'text', text: JSON.stringify({ imagePath: path, mimeType: item.mimeType }) };
+      }
+      for (const item of reply?.result?.content || []) {
+        if (item.type !== 'text') continue;
+        try {
+          const value = JSON.parse(item.text);
+          if (imagePaths.has(value.image_base64)) {
+            value.imagePath = imagePaths.get(value.image_base64); delete value.image_base64;
+            item.text = JSON.stringify(value);
+          }
+        } catch { /* Preserve native non-JSON text. */ }
+      }
+      console.log(JSON.stringify(reply));
     } catch (error) { console.log(JSON.stringify({ error: error.message })); }
   }
 } finally { input.close(); await controller.close(); }

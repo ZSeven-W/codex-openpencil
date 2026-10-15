@@ -68,7 +68,9 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    `update_node`, layout inspection or rendering tools. They use the same Rust
    document as the visible canvas. Read the result of every write; never replay
    a failed or timed-out mutation automatically. Do not start a second canvas
-   for the same design while this process is active.
+   for the same design while this process is active. Native screenshot results
+   are written to private image files and returned as `imagePath`; open those
+   files with the agent's image viewer for visual QA.
 4. Complete the user's requested design, inspect layout and preview it, save to
    an absolute `.op` path with `canvas_save`, and read the saved result back.
    A fresh demonstration should be a single page unless the user requested

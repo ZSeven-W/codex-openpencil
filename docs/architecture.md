@@ -20,9 +20,15 @@ public read-only web SDK. Native images and JSON-RPC errors pass through.
 
 Reading the UI resource starts only a lightweight panel server; it never switches
 the active document. Opening a canvas verifies every runtime manifest SHA-256
-entry, platform and release. The daemon launches with `--serve-web --managed
+entry, platform and release. If configuration is absent, the pinned platform
+archive downloads on demand through the existing HTTPS proxy settings. The
+installer bounds download and extraction sizes, rejects links/traversal, checks
+archive and file hashes, and activates a complete runtime atomically. Existing
+valid custom runtimes remain selected; invalid configurations fail explicitly.
+The daemon launches with `--serve-web --managed
 --port 0` on a recovery copy, its own supervisor lease and settings root. The
-bounded handshake must match the bundle version. Rust acquisition is separate.
+bounded handshake must match the bundle version. Discovery does not download or
+start the Rust editor.
 
 While managed, all native tools route to the owned daemon; browser edits and
 Codex therefore share a document. `save_document` uses the guarded save. One

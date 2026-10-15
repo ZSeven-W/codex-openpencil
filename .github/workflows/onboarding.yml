@@ -33,4 +33,5 @@ jobs:
           export OPENPENCIL_CODEX_STATE_DIR="$(node -p 'require("path").resolve("artifacts/fresh-runtime")')"
           npm run setup
           node scripts/installed-smoke.mjs
+          node scripts/terminal-smoke.mjs
           npm run setup
