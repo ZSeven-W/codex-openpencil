@@ -79,9 +79,11 @@ startup 20 seconds and UI saves 15 seconds. A timeout never retries an edit.
 
 Native tool/resource loading, browser interaction and Codex desktop MCP Apps
 presentation are separate checks. Consult [validation](validation.md). A browser
-panel alone does not prove embedded presentation. Runtime acquisition, clean-machine
-onboarding and public directory submission remain separate work; there are no
-install hooks.
+panel alone does not prove embedded presentation. Automatic runtime acquisition and
+fresh application-state onboarding are covered by the published six-platform
+checks; system prerequisites are documented in [INSTALL.md](../INSTALL.md).
+Embedded host presentation and public directory submission remain separate work;
+there are no install hooks.
 
 The UI follows [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)
 and [OpenAI UI extensions](https://developers.openai.com/plugins/build/chatgpt-ui).
