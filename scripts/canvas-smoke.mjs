@@ -4,6 +4,7 @@ import { createInterface } from 'node:readline';
 import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { EditorSession } from '../plugins/openpencil/scripts/editor-session.mjs';
+import { CANVAS_URI } from '../plugins/openpencil/scripts/canvas-controller.mjs';
 
 const root=resolve('artifacts'); await mkdir(root,{recursive:true});
 const output=await mkdtemp(join(root,'canvas-'));
@@ -15,7 +16,7 @@ await writeFile(filePath,JSON.stringify({version:'0.8.5',children:[{type:'frame'
     {type:'rectangle',id:'canvas-card',name:'Accent',x:54,y:218,width:310,height:170,cornerRadius:16,fill:[{type:'solid',color:'#D2BB40'}]},
     {type:'text',id:'canvas-note',name:'Note',x:400,y:235,width:340,height:110,content:'Pan, zoom, edit layers,\nthen save as .op.',fontSize:25,fontFamily:'DM Sans',fill:[{type:'solid',color:'#48493A'}]},
   ]}]},null,2));
-const child=spawn(process.execPath,['plugins/openpencil/scripts/mcp-bridge.mjs'],{stdio:['pipe','pipe','inherit']});
+const child=spawn(process.execPath,[process.env.OPENPENCIL_TEST_BRIDGE || 'plugins/openpencil/scripts/mcp-bridge.mjs'],{stdio:['pipe','pipe','inherit']});
 const pending=new Map(); let id=0;
 const outputLines=createInterface({input:child.stdout});
 outputLines.on('line',line=>{const value=JSON.parse(line);const request=pending.get(value.id);if(request){pending.delete(value.id);value.error?request.reject(new Error(value.error.message)):request.resolve(value.result);}});
@@ -28,7 +29,7 @@ try {
   const tools=await request('tools/list');
   assert.ok(tools.tools.some(t=>t.name==='batch_design'));
   assert.ok(tools.tools.some(t=>t.name==='open_canvas'));
-  const resource=await request('resources/read',{uri:'ui://openpencil/canvas/v0.2.html'});
+  const resource=await request('resources/read',{uri:CANVAS_URI});
   assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');
   assert.equal((await fetch(opened.structuredContent.panelUrl)).status,200);
   console.log(JSON.stringify({panelUrl:opened.structuredContent.panelUrl,filePath,output,toolCount:tools.tools.length},null,2));

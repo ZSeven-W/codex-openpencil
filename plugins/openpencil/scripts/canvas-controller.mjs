@@ -4,7 +4,7 @@ import { startPanel } from './canvas-panel.mjs';
 import { forward, errorReply } from './transport.mjs';
 import { readCanvasSelection, prepareSelectionEdit } from './canvas-selection.mjs';
 
-export const CANVAS_URI = 'ui://openpencil/canvas/v0.2.html';
+export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
 const filePath = { type: 'string', description: 'Absolute .op path; omit to create or reopen this session’s canvas.' };
 export const canvasTools = [

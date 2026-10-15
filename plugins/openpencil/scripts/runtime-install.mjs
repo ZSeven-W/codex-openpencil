@@ -9,6 +9,15 @@ import { fetchRuntime } from './runtime-download.mjs';
 export const catalogPath = new URL('../runtime-catalog.json', import.meta.url);
 const inflight = new Map();
 
+export function assertSupportedLibc(platform, glibc) {
+  if (!platform.startsWith('linux-')) return;
+  const minor = platform === 'linux-arm64' ? 39 : 35;
+  const [major, current] = String(glibc || '').split('.').map(Number);
+  if (!major || major < 2 || (major === 2 && current < minor)) {
+    throw new Error(`Published ${platform} runtimes require glibc 2.${minor}+; musl/Alpine and older systems need a custom runtime.`);
+  }
+}
+
 export async function configureRuntime(root, state = stateRoot()) {
   const runtime = await resolveRuntime(root);
   await mkdir(state, { recursive: true, mode: 0o700 });
@@ -26,9 +35,14 @@ async function download(asset, url, fetchImpl, progress) {
     throw new Error('Invalid published runtime checksum or size.');
   }
   const response = await fetchImpl(url, { signal: AbortSignal.timeout(300_000) });
-  if (!response.ok || !response.body) throw new Error(`Runtime download failed (HTTP ${response.status}). Run setup again after checking GitHub connectivity.`);
+  const discard = () => { if (response.body?.destroy) response.body.destroy(); else response.body?.cancel?.().catch(() => {}); };
+  if (!response.ok || !response.body) {
+    discard(); throw new Error(`Runtime download failed (HTTP ${response.status}). Run setup again after checking GitHub connectivity.`);
+  }
   const declared = response.headers.get('content-length');
-  if (declared && Number(declared) !== asset.bytes) throw new Error('Runtime download size does not match the release catalog.');
+  if (declared && Number(declared) !== asset.bytes) {
+    discard(); throw new Error('Runtime download size does not match the release catalog.');
+  }
   const chunks = []; let size = 0, reported = 0;
   for await (const chunk of response.body) {
     size += chunk.length;
@@ -44,6 +58,7 @@ async function download(asset, url, fetchImpl, progress) {
 export async function installRuntime(options = {}) {
   const state = resolve(options.state ?? stateRoot());
   const platform = options.platform ?? `${process.platform}-${process.arch}`;
+  if (process.platform === 'linux') assertSupportedLibc(platform, process.report.getReport().header.glibcVersionRuntime);
   const catalog = options.catalog ?? JSON.parse(await readFile(catalogPath, 'utf8'));
   const entry = catalog.platforms?.[platform];
   if (catalog.schemaVersion !== 1 || !/^runtime-v[\w.-]+$/.test(catalog.release) ||
