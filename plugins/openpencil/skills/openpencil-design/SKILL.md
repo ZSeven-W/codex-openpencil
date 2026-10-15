@@ -77,6 +77,9 @@ Codex conversation. Never claim a copied request has already modified the design
   Absolute x/y coordinates on children do not replace a proper flow layout.
 - Use `design_refine` on the affected root when appropriate, then inspect the
   returned changes. A successful refine is not visual acceptance.
+  After structural repair or `finalize_design`, reread `get_editor_state` and
+  `batch_get`: a repaired tree may have new node IDs. Use those current IDs for
+  layout inspection, screenshots and subsequent edits.
 
 ## Inspect and deliver
 

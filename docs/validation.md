@@ -1,3 +1,55 @@
+# One-prompt installation — 2026-10-16
+
+The repository is public. v0.3.0 adds a complete runtime installer, an agent-facing
+`INSTALL.md`, verified setup before plugin registration, and a persistent terminal
+canvas for the installation chat before newly installed MCP tools reconnect.
+Managed upgrades preserve custom runtime choices and retain the previous
+configuration when acquiring a new release fails.
+
+From empty runtime and Codex configuration directories, setup downloaded the
+published macOS ARM64 runtime without an override, verified it, completed the
+isolated edit/save/reopen check, and installed the actual cached v0.3.0 plugin.
+That installed bridge exposed 178 tools and passed a separate edit/save/reopen
+smoke. Both pipe and real-PTY terminal fallbacks passed long Chinese input,
+inspectable PNG preview and saved readback. Repeating setup reused the verified
+runtime and registered marketplace successfully. The installer also creates a
+requested, previously absent `CODEX_HOME` before invoking Codex CLI.
+Local logs are retained at `artifacts/fresh-published-setup-2.log` and
+`artifacts/fresh-published-exercise.log`. Package checks and all 60 Node tests
+passed; all six published asset sizes and GitHub SHA-256 digests match the
+bundled runtime catalog.
+
+The runtime pins the clean public OpenPencil revision
+`40902a3fa595a78b6f97e9409875cef823b0e191` (0.8.5). The
+[runtime build](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38778552317)
+passed native edit/save/reopen smoke tests on macOS, Windows and Linux for both
+ARM64 and x64. The macOS ARM64 archive was independently downloaded and its
+archive hash, file manifest and native mobile behavior were checked locally.
+Phone widths 375, 390 and 430 retain exactly one complete canonical status bar
+through create, edit, save and reopen; a 1440px desktop has none.
+
+A first-use single-page task app was created through the persistent terminal,
+visually inspected, saved and reopened in a separate native session. It has one
+root, 58 editable nodes and one complete status bar. The before/reopened PNGs
+have the same SHA-256:
+`9b90faad85e5b64caecc3c10743e643582821edaf10e7bd6729b7f53a700e559`.
+The ignored local report is `artifacts/first-use-design-report.json`.
+Layout and lint were inspected; nonblocking warnings for tonal card surfaces and
+mixed heading/progress geometry were reviewed against the actual PNG.
+
+This test exposed canonical PTY input truncating long JSON batches on macOS.
+The terminal entry point now uses raw input and restores the terminal mode on
+exit. The regression sends a long Chinese update through a real POSIX PTY,
+checks the saved text and inspectable PNG, then closes the owned session.
+The PTY test's relay uses Python 3's standard library only; production setup and
+canvas remain dependency-free Node.js. Ctrl-C shutdown was also checked locally.
+
+Actual embedded Codex host UI rendering and automatic `ui/message` follow-up
+delivery remain separate from these native/terminal tests. A newly installed
+plugin may need reconnect or a new chat; the first-chat terminal fallback does
+not claim that the MCP tools have already loaded. This public GitHub release has
+not been submitted to OpenAI's public plugin directory.
+
 # Selection warning recovery — 2026-10-15
 
 Selection/page changes during a poll now carry a typed read error instead of

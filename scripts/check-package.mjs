@@ -13,6 +13,20 @@ const pluginRoot = resolve(root, entry.source.path);
 assert.ok(!relative(root, pluginRoot).startsWith('..'));
 const manifest = await json(join(pluginRoot, 'plugin.json'));
 const pkg = await json(join(root, 'package.json'));
+const catalog = await json(join(pluginRoot, 'runtime-catalog.json'));
+assert.equal(catalog.schemaVersion, 1);
+assert.match(catalog.openPencilVersion, /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/);
+assert.match(catalog.openPencilRevision, /^[a-f0-9]{40}$/);
+assert.equal(catalog.release, `runtime-v${catalog.openPencilVersion}-${catalog.openPencilRevision.slice(0, 7)}`);
+const platforms = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64', 'win32-arm64', 'win32-x64'];
+assert.deepEqual(Object.keys(catalog.platforms).sort(), platforms, 'Publish checksums for all six runtime builds');
+for (const platform of platforms) {
+  const asset = catalog.platforms[platform];
+  assert.equal(asset.platform, platform);
+  assert.equal(asset.asset, `openpencil-runtime-${platform}.tar.gz`);
+  assert.ok(Number.isSafeInteger(asset.bytes) && asset.bytes > 0 && asset.bytes <= 256 * 1024 * 1024);
+  assert.match(asset.sha256, /^[a-f0-9]{64}$/);
+}
 assert.equal(manifest.name, entry.name);
 assert.equal(manifest.version, pkg.version);
 assert.equal(entry.policy.installation, 'AVAILABLE');
@@ -71,4 +85,4 @@ async function scan(dir) {
   }
 }
 await scan(pluginRoot);
-console.log('Plugin identity, MCP paths, skill references, portability and license: OK');
+console.log('Plugin identity, runtime release catalog, MCP paths, skill references, portability and license: OK');

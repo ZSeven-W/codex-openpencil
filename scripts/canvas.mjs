@@ -6,8 +6,16 @@ import { CanvasController } from '../plugins/openpencil/scripts/canvas-controlle
 const args = process.argv.slice(2);
 if (args.length && (args.length !== 2 || args[0] !== '--file')) throw new Error('Usage: npm run canvas [-- --file /absolute/design.op]');
 const controller = new CanvasController();
+// Canonical PTY input truncates JSON design batches at the OS line-buffer limit.
+// Raw input lets readline frame complete JSON lines without terminal echo.
+const tty = process.stdin.isTTY && typeof process.stdin.setRawMode === 'function';
+const previousRawMode = process.stdin.isRaw;
+if (tty) process.stdin.setRawMode(true);
 const input = createInterface({ input: process.stdin, terminal: false });
-const shutdown = () => input.close();
+let stopping = false;
+const shutdown = () => { stopping = true; input.close(); };
+const interrupt = chunk => { if (chunk.includes(3) || chunk.includes(4)) shutdown(); };
+if (tty) process.stdin.on('data', interrupt);
 process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
 try {
   const opened = await controller.open(args.length ? { filePath: resolve(args[1]) } : {});
@@ -15,6 +23,7 @@ try {
     input: 'One JSON object per line: {"name":"get_editor_state","arguments":{}}. Send {"quit":true} to close. Never retry a failed write automatically.' }));
   let id = 0;
   for await (const line of input) {
+    if (stopping) break;
     if (!line.trim()) continue;
     try {
       const request = JSON.parse(line);
@@ -46,4 +55,9 @@ try {
       console.log(JSON.stringify(reply));
     } catch (error) { console.log(JSON.stringify({ error: error.message })); }
   }
-} finally { input.close(); await controller.close(); }
+} finally {
+  input.close();
+  process.stdin.off('data', interrupt);
+  if (tty) { process.stdin.setRawMode(Boolean(previousRawMode)); process.stdin.pause(); }
+  await controller.close();
+}

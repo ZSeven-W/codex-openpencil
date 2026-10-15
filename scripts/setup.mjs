@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,7 +40,10 @@ export async function verifyRuntime(runtimeRoot) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    if (!args.includes('--runtime-only')) runCodex(['plugin', 'add', '--help'], { cwd: root, quiet: true });
+    if (!args.includes('--runtime-only')) {
+      if (process.env.CODEX_HOME) await mkdir(resolve(process.env.CODEX_HOME), { recursive: true, mode: 0o700 });
+      runCodex(['plugin', 'add', '--help'], { cwd: root, quiet: true });
+    }
     // Acquire and verify before registering the plugin; an interrupted download
     // must not leave an apparently ready plugin with no usable editor.
     const runtime = args.includes('--repair-runtime') ? await installRuntime() : await ensureRuntime();

@@ -37,6 +37,10 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    npm run setup
    ```
 
+   If Git cannot reach GitHub through the user's existing network, inspect the
+   normal proxy settings and pass that HTTP proxy to this process with
+   `HTTPS_PROXY`. Do not replace the user's global Git or system proxy settings.
+
    There are no npm runtime dependencies. `npm run setup` acquires the pinned
    complete runtime for the local OS/CPU, verifies the archive SHA-256 and every
    payload file, then proves panel startup, a native edit, save, and reopen using
