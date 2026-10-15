@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { EditorSession } from './editor-session.mjs';
 import { startPanel } from './canvas-panel.mjs';
 import { forward, errorReply } from './transport.mjs';
+import { readCanvasSelection, prepareSelectionEdit } from './canvas-selection.mjs';
 
 export const CANVAS_URI = 'ui://openpencil/canvas/v0.2.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
@@ -12,6 +13,13 @@ export const canvasTools = [
     _meta: { ui: { resourceUri: CANVAS_URI }, 'openai/ui': { entrypoints: [{ type: 'thread' }] } } },
   { name: 'canvas_status', description: 'Read managed canvas file, recovery path, document version and selection.', inputSchema: schema({}),
     annotations: { readOnlyHint: true, openWorldHint: false } },
+  { name: 'canvas_selection', description: 'Read the current managed canvas selection: exact node IDs, names, types, parents, active page and document version. Call before modifying selected elements from a chat prompt; read these nodes with batch_get, then edit only their subtrees. Empty selection means no target, never the entire page.',
+    inputSchema: schema({}), annotations: { readOnlyHint: true, openWorldHint: false } },
+  { name: 'canvas_prepare_edit', description: 'Prepare a prompt tied to an exact selection, without editing or sending it. Refuses an empty or changed selection and unsynced browser snapshots.',
+    inputSchema: schema({ prompt: { type: 'string', minLength: 1, maxLength: 8000 },
+      expectedSelection: { type: 'object', properties: { pageId: { type: 'string' }, nodeIds: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['pageId', 'nodeIds'], additionalProperties: false },
+      docJson: { type: 'string', description: 'UI-only flushed document snapshot.' } }),
+    annotations: { readOnlyHint: true, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
   { name: 'canvas_save', description: 'Save the managed canvas to its original path or a new absolute .op path. Refuses external changes or an existing Save As destination. UI must flush its snapshot first; never automatically retry.',
     inputSchema: schema({ filePath, docJson: { type: 'string', description: 'UI-only flushed document snapshot, used to reject stale saves.' } }),
     annotations: { destructiveHint: true, openWorldHint: false } },
@@ -44,15 +52,15 @@ export class CanvasController {
     if (!this.session) throw new Error('Open a managed canvas with open_canvas first.');
     if (name === 'canvas_save') return toolResult(await this.session.save(args));
     if (name === 'canvas_checkpoint') return toolResult(await this.session.checkpoint());
-    const document = await this.session.document();
-    const selection = await this.session.forward({ jsonrpc: '2.0', id: 'canvas-selection', method: 'tools/call', params: { name: 'get_editor_state', arguments: {} } });
-    return toolResult({ filePath: this.session.source, recoveryPath: this.session.draft, version: document.version, selection: selection.result });
+    const current = await readCanvasSelection(this.session, { fresh: name === 'canvas_prepare_edit' });
+    if (name === 'canvas_prepare_edit') return toolResult(prepareSelectionEdit(args, current, this.session));
+    return toolResult({ filePath: this.session.source, recoveryPath: this.session.draft, version: current.live.version, selection: current.selection });
   }
   async resource() {
     const panel = await this.ensurePanel();
     const template = await readFile(new URL('../ui/app.html', import.meta.url), 'utf8');
     return { contents: [{ uri: CANVAS_URI, mimeType: 'text/html;profile=mcp-app', text: template,
-      _meta: { ui: { prefersBorder: false, csp: { frameDomains: [panel.origin], connectDomains: [], resourceDomains: [] } },
+      _meta: { ui: { prefersBorder: false, permissions: { clipboardWrite: {} }, csp: { frameDomains: [panel.origin], connectDomains: [], resourceDomains: [] } },
         'openai/ui': { availableDisplayModes: ['inline', 'fullscreen'], preferredDisplayMode: 'fullscreen' } } }] };
   }
   async dispatch(message) {
@@ -82,7 +90,8 @@ export class CanvasController {
       return upstream;
     } catch (error) {
       if (!Object.hasOwn(message, 'id')) return null;
-      if (message.method === 'tools/call') return reply({ content: [{ type: 'text', text: error.message }], isError: true });
+      if (message.method === 'tools/call') return reply({ content: [{ type: 'text', text: error.message }], isError: true,
+        ...(error.code ? { structuredContent: { code: error.code } } : {}) });
       return errorReply(message.id, -32000, error.message);
     }
   }

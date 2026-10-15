@@ -28,13 +28,44 @@ Load only the relevant connected design guidelines/style guides/UI kits.
 Use [node and layout reference](references/node-schema.md) for field conventions;
 the live tool schemas and guidelines take precedence over this bundled snapshot.
 Reuse the document's variables, components, and style before inventing new ones.
+For a new phone screen, load `get_guidelines` with `topic: "mobile"` before
+creating its root frame. Use the Rust runtime's canonical status bar; do not
+hand-draw a replacement or use emoji for system indicators.
 
 ## Build and edit
+
+For prompts such as “modify the selected elements”, call `canvas_selection` on
+the managed canvas immediately before planning the edit. It returns `pageId`,
+`nodeIds`, names, types and parent IDs. Read the selected nodes with `batch_get`;
+limit edits to those nodes and their descendants. An empty selection is not a
+request to edit the whole page: ask the user to select a target. For a desktop
+editor without a managed canvas, use `get_editor_state` and read its selection.
+
+Requests from the canvas prompt bar contain an **OpenPencil selection edit scope**
+with a file/recovery path, page ID, document version, request ID and exact node IDs.
+Use that captured scope even if the live selection has since changed. Verify the
+managed file and active page before reading/editing. If the same document is still
+open on another page, inspect `list_pages` and switch to the captured page; never
+open a different document over a user's managed canvas. If the target was deleted,
+the file does not match, or the intent is ambiguous after newer edits, stop and
+explain instead of choosing another target. Preserve unrelated nodes and reuse
+existing IDs where possible. Preview the affected roots after the edit, and
+distinguish a submitted prompt from an applied and visually checked result.
+
+The prompt bar sends a follow-up only when the host advertises message support.
+In a standalone browser it copies a request for the user to paste into the current
+Codex conversation. Never claim a copied request has already modified the design.
 
 - Create fresh UI trees using `batch_design.script`: sandboxed JavaScript with
   `I(parent, node)` and `K(kitRef, parent, overrides)`, helpers, arrays, and loops.
   Build section by section; keep each batch at most 25 recorded operations.
   Reuse returned IDs, not assumed ID sequences.
+- After creating a phone root, read it back before adding screen content. Locate
+  and preserve the runtime's `role: "status-bar"` subtree, including its children.
+  If it is absent, diagnose the connected runtime and guidelines before
+  proceeding; do not invent a bar and claim native support was verified.
+  Respect existing custom bars and explicit requests for no status bar. Apply
+  this phone-screen workflow by design intent, not to every narrow frame.
 - Use `batch_design.operations` for editing existing nodes with `U/C/R/M/D/G`.
   Do not mix creation and edits in script, and do not use `I()` in operations.
   Prefer native UI kits (`list_ui_kits`) for standard controls.
@@ -54,6 +85,8 @@ Reuse the document's variables, components, and style before inventing new ones.
 2. Render affected roots with `get_screenshot` and actually view the image.
    Check copy, hierarchy, spacing, colors, and reference fidelity. If rendering
    is unavailable, report that limit rather than claiming a visual pass.
+   For phone screens with system chrome, verify exactly one complete set of
+   time, cellular signal, Wi-Fi, and battery indicators, with no duplicate bar.
 3. For managed interactive persistence, the panel Save button flushes pending
    browser edits. `canvas_save` and intercepted `save_document` save the daemon's
    current snapshot; verify pending edits have synced before calling them. Save

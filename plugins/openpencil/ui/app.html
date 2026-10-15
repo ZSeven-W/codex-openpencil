@@ -1,6 +1,51 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;min-height:600px;background:#f6f5f0;font:14px sans-serif}iframe{border:0;width:100%;height:100vh;min-height:600px;display:block}#notice{padding:20px;color:#655d41}</style></head><body><div id="notice" role="status">连接 OpenPencil 画布…</div><iframe id="panel" title="OpenPencil Canvas" hidden allow="clipboard-read; clipboard-write; local-fonts"></iframe><script>
-const pending = new Map(); let nextId = 1, panelOrigin, hostCapabilities = {}, opened = false;
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root { color-scheme:light; --background:#f6f5f0; --text:#655d41; }
+:root[data-theme="dark"] { color-scheme:dark; --background:#20211e; --text:#c5c3b7; }
+html,body { margin:0; height:100%; min-height:600px; background:var(--background); color:var(--text); font:14px sans-serif; }
+iframe { border:0; width:100%; height:100vh; min-height:600px; display:block; }
+#notice { padding:20px; }
+[hidden] { display:none!important; }
+</style></head><body><div id="notice" role="status">连接 OpenPencil 画布…</div><iframe id="panel" title="OpenPencil Canvas" hidden allow="clipboard-read; clipboard-write; local-fonts"></iframe><script>
+const pending = new Map();
+let nextId = 1, panelOrigin, hostCapabilities = {}, opened = false;
+let hostTheme, hostThemeChanged = false;
 const frame = document.getElementById('panel'), notice = document.getElementById('notice');
+const systemTheme = window.matchMedia?.('(prefers-color-scheme: dark)');
+const validTheme = value => value === 'light' || value === 'dark';
+let compatibilityTheme = validTheme(window.openai?.theme) ? window.openai.theme : undefined;
+let colorScheme;
+let lastContext;
+const submissions = new Map();
+
+function sendTheme() {
+  if (opened) frame.contentWindow?.postMessage({ type:'codex-canvas/theme', colorScheme,
+    canSendPrompt: Boolean(hostCapabilities.message?.text) }, panelOrigin);
+}
+function applyTheme() {
+  const nextTheme = hostTheme || compatibilityTheme || (systemTheme?.matches ? 'dark' : 'light');
+  if (colorScheme === nextTheme) return;
+  colorScheme = nextTheme;
+  document.documentElement.dataset.theme = colorScheme;
+  document.documentElement.style.colorScheme = colorScheme;
+  sendTheme();
+}
+function acceptHostTheme(value) {
+  if (!validTheme(value)) return;
+  hostTheme = value;
+  applyTheme();
+}
+systemTheme?.addEventListener('change', applyTheme);
+window.addEventListener('openai:set_globals', event => {
+  const theme = event.detail?.globals?.theme;
+  if (!validTheme(theme)) return;
+  compatibilityTheme = theme;
+  applyTheme();
+});
+frame.addEventListener('load', sendTheme);
+applyTheme();
+
 function request(method, params) {
   const id = `canvas-${nextId++}`;
   return new Promise((resolve,reject) => {
@@ -14,16 +59,47 @@ function show(result) {
   if (!raw || opened) return;
   let url; try { url = new URL(raw); } catch { return; }
   if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !/^\/canvas\/[A-Za-z0-9_-]{43}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) return;
+  // The local server deliberately rejects query parameters. Seed the first paint
+  // through the fragment; subsequent changes never navigate the active document.
+  url.hash = `theme=${colorScheme}`;
   opened = true; panelOrigin = url.origin; frame.src = url.href; frame.hidden = false; notice.hidden = true;
 }
-window.addEventListener('message',event => {
-  if (event.source === frame.contentWindow && event.origin === panelOrigin && event.data?.type === 'codex-canvas/context') {
-    if (hostCapabilities.updateModelContext) request('ui/update-model-context',{content:[{type:'text',text:JSON.stringify({canvasFile:event.data.filePath,selection:event.data.selection})}]}).catch(()=>{});
+async function submitPrompt(value) {
+  if (typeof value.requestId !== 'string' || !value.requestId || value.requestId.length > 80 ||
+      typeof value.message !== 'string' || !value.message.trim() || value.message.length > 24000) return;
+  // Duplicate delivery must not create a second conversation turn.
+  if (submissions.has(value.requestId)) return;
+  submissions.set(value.requestId, true);
+  if (submissions.size > 100) submissions.delete(submissions.keys().next().value);
+  const reply = { type:'codex-canvas/prompt-result', requestId:value.requestId };
+  try {
+    if (!hostCapabilities.message?.text) throw new Error('当前宿主不支持直接发送，请复制修改请求到 Codex 聊天。');
+    const result = await request('ui/message', { role:'user', content:[{type:'text',text:value.message}] });
+    if (!result || typeof result !== 'object' || result.isError) throw new Error('宿主未接受修改请求。提示词已保留，请检查聊天状态。');
+    reply.ok = true;
+  } catch (error) { reply.ok = false; reply.error = error.message; }
+  frame.contentWindow?.postMessage(reply, panelOrigin);
+}
+window.addEventListener('message', event => {
+  if (event.source === frame.contentWindow && event.origin === panelOrigin) {
+    if (event.data?.type === 'codex-canvas/ready') sendTheme();
+    if (event.data?.type === 'codex-canvas/context' && hostCapabilities.updateModelContext) {
+      const context = JSON.stringify({canvasFile:event.data.filePath,selection:event.data.selection});
+      if (context !== lastContext) {
+        lastContext = context;
+        request('ui/update-model-context',{content:[{type:'text',text:context}]}).catch(()=>{ if (lastContext === context) lastContext = undefined; });
+      }
+    }
+    if (event.data?.type === 'codex-canvas/prompt') void submitPrompt(event.data);
     return;
   }
   if (event.source !== window.parent || event.data?.jsonrpc !== '2.0') return;
   const message = event.data;
   if (pending.has(message.id)) { const p=pending.get(message.id);clearTimeout(p.timer);pending.delete(message.id);message.error?p.reject(new Error(message.error.message)):p.resolve(message.result); }
+  if (message.method === 'ui/notifications/host-context-changed' && validTheme(message.params?.theme)) {
+    hostThemeChanged = true;
+    acceptHostTheme(message.params.theme);
+  }
   if (message.method === 'ui/notifications/tool-result') show(message.params);
   if (message.method === 'ping') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
   if (message.method === 'ui/resource-teardown') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
@@ -31,6 +107,8 @@ window.addEventListener('message',event => {
 (async()=>{
   const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.2.0'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
   hostCapabilities=initialized.hostCapabilities||{};
+  // A notification received during initialization is newer than its response.
+  if (!hostThemeChanged) acceptHostTheme(initialized.hostContext?.theme);
   window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized',params:{}},'*');
   // Entrypoints send {}; reopening never replaces this conversation's active document.
   if (hostCapabilities.serverTools) show(await request('tools/call',{name:'open_canvas',arguments:{}}));

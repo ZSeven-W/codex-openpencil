@@ -1,5 +1,4 @@
 import test from 'node:test';
-import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,6 +7,7 @@ import { atomicSave, sourceBytes } from '../plugins/openpencil/scripts/editor-se
 import { sha256, resolveRuntime } from '../plugins/openpencil/scripts/editor-runtime.mjs';
 import { CanvasController, CANVAS_URI } from '../plugins/openpencil/scripts/canvas-controller.mjs';
 import { snapshotMatches, diskDocument } from '../plugins/openpencil/scripts/document-format.mjs';
+import { createUiHarness, initializeApp, openPanel } from './ui-harness.mjs';
 
 const document = name => JSON.stringify({ version: '0.8.5', children: [{ type: 'frame', id: 'one', name }] });
 async function dir(t) { const path = await mkdtemp(join(tmpdir(), 'codex-canvas-')); t.after(() => rm(path, { recursive: true, force: true })); return path; }
@@ -102,33 +102,23 @@ test('Shared queue preserves ordering and a failed write is not replayed', async
 });
 
 
-test('MCP Apps handshake opens the panel and accepts selection only from the exact frame', async t => {
-  const html = await readFile(new URL('../plugins/openpencil/ui/app.html', import.meta.url), 'utf8');
-  const messages = [], timers = [], frame = {hidden:true,contentWindow:{}}, notice = {};
-  const parent = {postMessage: message => messages.push(message)};
-  let listener;
-  const context = { URL, window: {parent,addEventListener: (_,handler) => {listener=handler;}},
-    document: {getElementById: id => id==='panel' ? frame : notice},
-    setTimeout: (callback,delay) => {const timer=setTimeout(callback,delay);timers.push(timer);return timer;}, clearTimeout };
-  t.after(()=>timers.forEach(clearTimeout));
-  vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],context);
-  assert.equal(messages[0].method,'ui/initialize');
-  listener({source:parent,data:{jsonrpc:'2.0',id:messages[0].id,result:{hostCapabilities:{serverTools:{},updateModelContext:{}}}}});
-  await new Promise(resolve=>setImmediate(resolve));
-  const open = messages.find(message=>message.method==='tools/call');
-  assert.equal(open.params.name,'open_canvas');
-  listener({source:parent,data:{jsonrpc:'2.0',method:'ui/notifications/tool-result',params:{structuredContent:{panelUrl:'invalid'}}}});
-  assert.equal(frame.hidden,true);
-  const url = 'http://127.0.0.1:1234/canvas/'+'a'.repeat(43);
-  listener({source:parent,data:{jsonrpc:'2.0',id:open.id,result:{structuredContent:{panelUrl:url}}}});
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(frame.src,url); assert.equal(frame.hidden,false);
-  const count = messages.length;
-  listener({source:frame.contentWindow,origin:'https://foreign.example',data:{type:'codex-canvas/context'}});
-  assert.equal(messages.length,count);
-  listener({source:frame.contentWindow,origin:'http://127.0.0.1:1234',data:{type:'codex-canvas/context',filePath:'/design.op',selection:['one']}});
-  const update = messages.at(-1);
-  assert.equal(update.method,'ui/update-model-context');
-  assert.match(update.params.content[0].text,/design.op/);
-  listener({source:parent,data:{jsonrpc:'2.0',id:update.id,result:{}}});
+test('MCP Apps handshake opens the panel and accepts selection only from the exact frame', async () => {
+  const ui = await createUiHarness('app');
+  assert.equal(ui.hostMessages[0].data.method, 'ui/initialize');
+  await initializeApp(ui, 'light');
+  const open = ui.hostMessages.find(item => item.data.method === 'tools/call').data;
+  assert.equal(open.params.name, 'open_canvas');
+  ui.host({jsonrpc:'2.0',method:'ui/notifications/tool-result',params:{structuredContent:{panelUrl:'invalid'}}});
+  assert.equal(ui.frame.hidden, true);
+  const url = await openPanel(ui);
+  assert.equal(ui.frame.src, url + '#theme=light');
+  assert.equal(ui.frame.hidden, false);
+  const count = ui.hostMessages.length;
+  ui.window.emit('message', {source:ui.frame.contentWindow,origin:'https://foreign.example',data:{type:'codex-canvas/context'}});
+  assert.equal(ui.hostMessages.length, count);
+  ui.window.emit('message', {source:ui.frame.contentWindow,origin:'http://127.0.0.1:1234',data:{type:'codex-canvas/context',filePath:'/design.op',selection:['one']}});
+  const update = ui.hostMessages.at(-1).data;
+  assert.equal(update.method, 'ui/update-model-context');
+  assert.match(update.params.content[0].text, /design.op/);
+  ui.host({jsonrpc:'2.0',id:update.id,result:{}});
 });

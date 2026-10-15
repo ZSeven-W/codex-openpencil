@@ -32,6 +32,18 @@ npm run configure-runtime -- /absolute/path/to/runtime
 保存前同步浏览器修改，源文件被外部改动时停止保存；另存为不覆盖已有文件。
 打开已有文件时先复制到独立会话，所有后续原生工具统一指向托管画布。
 
+## 选中元素后用提示词修改
+
+在画布中选择一个或多个元素，再在 Codex 聊天中提出修改要求，例如：
+
+> 把选中的卡片改成深色，标题放大，其他元素保持原样。
+
+插件通过 `canvas_selection` 读取选中元素，修改范围限定为这些元素及其子节点。
+也可使用画布底部的修改输入框：支持消息桥接的宿主显示“发送给 Codex”；
+独立浏览器显示“复制修改请求”，复制后粘贴到当前 Codex 聊天发送。
+请求固定提交时的文件、页面和元素 ID，后续切换选区不会换目标；
+未选中、选区变化或同步未完成时停止提交，发送失败时保留提示词。
+
 ## 连接已有桌面编辑器
 
 在 Rust OpenPencil 的 Agent Settings 中开启 MCP，运行 `npm run doctor`。
@@ -48,6 +60,7 @@ npm run check
 npm test
 npm run smoke -- --binary /path/to/openpencil-desktop
 npm run canvas-smoke
+npm run selection-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
 npm run canvas-smoke -- --hold
 ```
 

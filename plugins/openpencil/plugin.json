@@ -25,7 +25,11 @@
           "Create a single-page dashboard in OpenPencil.",
           "Inspect and refine the selected OpenPencil frame."
         ],
-        "brandColor": "#CFB537"
+        "brandColor": "#CFB537",
+        "composerIcon": "./assets/icon.png",
+        "composerIconDark": "./assets/icon.png",
+        "logo": "./assets/logo.png",
+        "logoDark": "./assets/logo.png"
       }
     }
   }

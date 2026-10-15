@@ -150,6 +150,7 @@ Roles declare intent — the engine applies smart defaults. Always prefer roles 
 |----------|-------|
 | **Layout** | `section`, `row`, `column`, `centered-content`, `divider`, `spacer` |
 | **Navigation** | `navbar`, `nav-links`, `nav-link` |
+| **Phone system chrome** | `status-bar` (preserve the runtime-generated subtree) |
 | **Interactive** | `button`, `icon-button`, `badge`, `tag`, `pill`, `input`, `form-input`, `search-bar` |
 | **Cards** | `card`, `feature-card`, `stat-card`, `pricing-card`, `image-card` |
 | **Content** | `hero`, `feature-grid`, `cta-section`, `footer`, `testimonial`, `stats-section` |
@@ -164,6 +165,17 @@ Key defaults:
 - `card` → vertical, gap: 12, cornerRadius: 12, padding: 24
 - `heading` → lineHeight: 1.2, letterSpacing: -0.5
 - `body-text` → fill_container, textGrowth: fixed-width, lineHeight: 1.5
+
+### Phone Status Bar
+
+For a new phone screen, load `get_guidelines` with `topic: "mobile"`, create the
+root, then read back its runtime-generated `role: "status-bar"` before adding
+content. Preserve its structure and indicator children; do not substitute
+hand-drawn or emoji indicators. Missing canonical chrome requires runtime
+diagnosis, not a claim of successful native setup. Visually verify one complete
+set of time, cellular signal, Wi-Fi, and battery after saving and reopening.
+Respect existing custom bars and an explicit no-status-bar brief; a narrow frame
+alone does not establish phone-screen intent.
 
 ## Layout Rules
 

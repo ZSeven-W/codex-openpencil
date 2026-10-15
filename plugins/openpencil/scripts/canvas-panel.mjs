@@ -5,7 +5,8 @@ import { MAX_BYTES } from './transport.mjs';
 
 export async function panelHtml(grant) {
   const root = new URL('../ui/', import.meta.url);
-  const [html, css, js] = await Promise.all(['panel.html', 'panel.css', 'panel.js'].map(name => readFile(new URL(name, root), 'utf8')));
+  const [html, css, panelJs, selectionJs] = await Promise.all(['panel.html', 'panel.css', 'panel.js', 'selection.js'].map(name => readFile(new URL(name, root), 'utf8')));
+  const js = panelJs + '\n' + selectionJs;
   const json = JSON.stringify(grant).replace(/</g, '\\u003c');
   return html.replace('/* PANEL_CSS */', css).replace('/* PANEL_GRANT */', json).replace('/* PANEL_JS */', js);
 }
@@ -40,14 +41,14 @@ export async function startPanel(controller) {
           chunks.push(chunk);
         }
         const message = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if (!['canvas_status', 'canvas_save', 'canvas_checkpoint'].includes(message.name)) {
+        if (!['canvas_status', 'canvas_selection', 'canvas_prepare_edit', 'canvas_save', 'canvas_checkpoint'].includes(message.name)) {
           reply(403, { error: 'Unsupported canvas control.' }); return;
         }
         const result = await controller.enqueue(() => controller.call(message.name, message.arguments || {}));
         reply(200, result); return;
       }
       req.resume(); reply(404, { error: 'Canvas route not found.' });
-    } catch (error) { reply(400, { error: error.message }); }
+    } catch (error) { reply(400, { error: error.message, code: error.code }); }
   });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   origin = `http://127.0.0.1:${server.address().port}`;

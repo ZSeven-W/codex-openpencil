@@ -12,6 +12,8 @@
     "doctor": "node plugins/openpencil/scripts/mcp-bridge.mjs --doctor",
     "configure-runtime": "node scripts/configure-runtime.mjs",
     "canvas-smoke": "node scripts/canvas-smoke.mjs",
+    "selection-smoke": "node scripts/selection-smoke.mjs",
+    "mobile-smoke": "node scripts/mobile-smoke.mjs",
     "smoke": "node scripts/smoke.mjs"
   }
 }

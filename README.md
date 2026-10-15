@@ -57,6 +57,27 @@ closing the plugin ends only its owned Rust process. Native resource loading,
 browser interaction and desktop embedded presentation are separate validation
 steps; see [evidence and remaining checks](docs/validation.md).
 
+The panel and Rust editor follow the host's light/dark appearance. MCP Apps use
+the initial host context and live theme notifications; standalone browser panels
+use `prefers-color-scheme` (Codex's in-app browser supplies its resolved app theme).
+Theme changes update the existing editor without reloading or saving the document.
+
+Select one or more elements, then tell Codex what to change (for example, “make
+the selected card dark and enlarge its heading”). `canvas_selection` resolves
+the exact active-page node IDs; the design workflow confines edits to those
+subtrees. The panel also has a selection prompt bar. A host with MCP Apps text
+message support can send it directly to the conversation. A standalone browser
+copies a request for you to paste into the current Codex chat. The request freezes
+the file, page and element IDs so a later selection change cannot redirect it.
+Empty/stale selections stop submission; failed sends preserve the prompt.
+
+Phone designs use the Rust runtime's standard status bar. A runtime can report
+the same release version while coming from a branch without the mobile MCP fix;
+verify behavior before adopting a runtime with the mobile smoke command below.
+This isolated check creates phone screens, checks
+that their system indicators appear once, then saves and reopens them. It also
+checks that desktop frames do not gain a phone status bar.
+
 ## Existing desktop editor
 
 Open Rust OpenPencil, enable MCP in Agent Settings, and run:
@@ -73,7 +94,7 @@ token before forwarding to loopback `/mcp`. It rejects stale records, unrelated
 listeners and legacy REST endpoints. Once managed, all native tools route to the
 owned daemon, including guarded `save_document`. Failed writes are never retried.
 
-The four canvas tools and UI resource remain discoverable with the desktop editor
+The canvas controls and UI resource remain discoverable with the desktop editor
 offline. Reconnect after starting a missing desktop editor to refresh its native
 catalog. Explicit local ports can use `OPENPENCIL_MCP_PORT` or `--port PORT`; do not
 commit machine settings. Existing direct MCP configuration may expose duplicate
@@ -96,6 +117,8 @@ npm run check
 npm test
 npm run smoke -- --binary /path/to/openpencil-desktop
 npm run canvas-smoke
+npm run selection-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
+npm run mobile-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
 # Hold an isolated canvas open for interactive verification:
 npm run canvas-smoke -- --hold
 ```

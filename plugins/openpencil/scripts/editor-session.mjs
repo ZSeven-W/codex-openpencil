@@ -118,6 +118,19 @@ export class EditorSession {
 
   async forward(message) { this.assertLive(); return post(this.port, message); }
 
+  async selectionDocument(pageIndex) {
+    this.assertLive();
+    const response = await fetch(`http://127.0.0.1:${this.port}/api/mcp/version`, { signal: AbortSignal.timeout(5_000) });
+    if (!response.ok) throw new Error('Canvas version read failed.');
+    const value = await response.json();
+    if (!Number.isSafeInteger(value.version)) throw new Error('Canvas version is invalid.');
+    // Selection polling must not repeatedly transfer embedded document images.
+    if (this.selectionSnapshot?.version !== value.version || this.selectionSnapshot.activePageIndex !== pageIndex) {
+      this.selectionSnapshot = await this.document();
+    }
+    return this.selectionSnapshot;
+  }
+
   async checkpoint() {
     const value = await this.document();
     const bytes = JSON.stringify(diskDocument(value)) + '\n';
