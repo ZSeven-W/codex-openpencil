@@ -14,8 +14,9 @@ CanvasKit、字体与模板按当前系统和 CPU 安装，无需 DSH、Rust 编
 Codex 可先通过终端画布入口在当前聊天完成设计，并明确说明当前使用的入口。
 
 需要本地 Node.js 22+、Git 和支持插件的新版本 Codex。安装过程不需要 GitHub
-账号或 API Key。支持 macOS、Windows、Linux 的 ARM64 与 x64；Linux 需要 glibc
-和 fontconfig / FreeType，具体系统要求见[兼容性表](INSTALL.md#supported-runtime-builds)。
+账号或 API Key。支持 macOS、Windows、Linux 的 ARM64 与 x64；Windows 需要
+对应架构的 VC++ v14 运行库，Linux 需要 glibc 和 fontconfig / FreeType。
+安装指南会让 Codex 补齐缺失依赖，具体系统要求见[兼容性表](INSTALL.md#supported-runtime-builds)。
 
 手动安装也只需：
 

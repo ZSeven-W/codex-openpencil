@@ -34,6 +34,8 @@ Setup registers the persistent checkout and installs `openpencil@zseven-openpenc
 First use also installs a missing runtime automatically. All six macOS/Windows/
 Linux CPU builds are listed in [INSTALL.md](INSTALL.md#supported-runtime-builds).
 Linux uses glibc and needs fontconfig/FreeType system libraries.
+Windows needs the matching Microsoft Visual C++ v14 Redistributable; the install
+guide directs the agent to resolve missing system prerequisites.
 
 Existing valid custom runtimes are preserved. To select one explicitly:
 

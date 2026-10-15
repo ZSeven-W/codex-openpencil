@@ -19,6 +19,21 @@ Local logs are retained at `artifacts/fresh-published-setup-2.log` and
 passed; all six published asset sizes and GitHub SHA-256 digests match the
 bundled runtime catalog.
 
+The [fresh public install matrix](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38785451951)
+passed on all six native runners. Each starts with empty runtime and Codex state,
+installs the public Codex CLI, downloads the public runtime asset, verifies a real
+native edit/save/reopen, exercises the actual installed plugin bridge and terminal
+PNG/save flow, and repeats setup. The four POSIX runners also pass the real-PTY
+long-input regression. System prerequisites come from the runner or the explicit
+Linux library step; these are empty application states, not bare OS images.
+The [Node 22/24 matrix](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38785444832)
+also passes package checks and all 60 tests on macOS, Windows and Linux.
+
+Separately, an unauthenticated HTTPS clone/fetch of the public repository was
+updated to the published main commit with Git's credential helper disabled.
+Setup, the installed bridge and the real-PTY fallback passed from that checkout
+with a new Codex profile, reusing the independently verified runtime cache.
+
 The runtime pins the clean public OpenPencil revision
 `40902a3fa595a78b6f97e9409875cef823b0e191` (0.8.5). The
 [runtime build](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38778552317)
