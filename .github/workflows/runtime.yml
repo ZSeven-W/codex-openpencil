@@ -4,8 +4,8 @@ on:
 permissions:
   contents: write
 env:
-  UPSTREAM_REVISION: 40902a3fa595a78b6f97e9409875cef823b0e191
-  RUNTIME_TAG: runtime-v0.8.5-40902a3
+  UPSTREAM_REVISION: 175844ede42a47268f753d331f0eeae32b010324
+  RUNTIME_TAG: runtime-v0.8.5-175844e
 jobs:
   web:
     runs-on: ubuntu-22.04
@@ -116,4 +116,4 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           node --input-type=module -e 'import fs from "node:fs"; const platforms=Object.fromEntries(fs.readdirSync("release").filter(n=>n.endsWith(".json")).map(n=>{const p=JSON.parse(fs.readFileSync("release/"+n));return [p.platform,p]})); if(Object.keys(platforms).length!==6)throw Error("Expected six native platforms"); fs.writeFileSync("release/runtime-catalog.json",JSON.stringify({schemaVersion:1,release:process.env.RUNTIME_TAG,openPencilVersion:"0.8.5",openPencilRevision:process.env.UPSTREAM_REVISION,platforms},null,2)+"\n")'
-          gh release create "$RUNTIME_TAG" release/*.tar.gz release/runtime-catalog.json --title "Rust editor runtime 0.8.5 (40902a3)" --notes "Complete native Rust editor, matching editable WASM, CanvasKit, fonts and product assets. Six native build runners pass edit/save/reopen smoke tests."
+          gh release create "$RUNTIME_TAG" release/*.tar.gz release/runtime-catalog.json --title "Rust editor runtime 0.8.5 (175844e)" --notes "Complete native Rust editor, matching editable WASM, CanvasKit, fonts and product assets. Six native build runners pass edit/save/reopen smoke tests."

@@ -7,7 +7,7 @@ const [source, web, destination] = process.argv.slice(2).map(path => resolve(pat
 if (!destination) throw new Error('Usage: node scripts/stage-runtime.mjs SOURCE_CHECKOUT WEB_BUNDLE OUTPUT');
 const platform = `${process.platform}-${process.arch}`;
 const binaryName = process.platform === 'win32' ? 'op-host-web-server.exe' : 'op-host-web-server';
-const revision = '40902a3fa595a78b6f97e9409875cef823b0e191';
+const revision = '175844ede42a47268f753d331f0eeae32b010324';
 const root = join(destination, 'runtime');
 await mkdir(join(root, 'bin'), { recursive: true });
 await copyFile(join(source, 'target/release', binaryName), join(root, 'bin', binaryName));
