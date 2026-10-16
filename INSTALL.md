@@ -20,7 +20,8 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    by their install request. Use the official [Node.js](https://nodejs.org/en/download),
    [Git](https://git-scm.com/downloads), and [Codex CLI](https://developers.openai.com/codex/cli)
    distributions. Preserve existing Codex settings, models and unrelated MCP servers.
-   The plugin's local executor needs `node` on PATH. Linux also needs fontconfig
+   Setup records the current Node executable privately so the desktop host can
+   launch it even when its PATH differs from the terminal. Linux also needs fontconfig
    and FreeType runtime libraries (`libfontconfig1` and `libfreetype6` on Ubuntu).
    Windows needs the matching [Microsoft Visual C++ v14 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist).
    The native package imports `MSVCP140.dll` and `VCRUNTIME140.dll`; check that the
@@ -45,9 +46,11 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    complete runtime for the local OS/CPU, verifies the archive SHA-256 and every
    payload file, then proves panel startup, a native edit, save, and reopen using
    an isolated test document. It finally registers this persistent checkout as the local marketplace and
-   installs `openpencil@zseven-openpencil`. Success must contain `"ok": true` and
-   `"pluginInstalled": true`; do not report success after a failed prerequisite,
-   download, smoke test or plugin command. `OPENPENCIL_CODEX_BIN` can identify a
+   installs `openpencil@zseven-openpencil`. It then starts Codex's actual plugin
+   loader and verifies the canvas controls. Success must contain `"ok": true`,
+   `"pluginInstalled": true`, and `"pluginHost": { "ok": true, ... }`; do not report
+   success after a failed prerequisite, download, smoke test, plugin command or
+   host check. This check opens no chat and does not edit a design. `OPENPENCIL_CODEX_BIN` can identify a
    non-PATH Codex executable. No runtime is downloaded during tool discovery.
 3. If `open_canvas` is available in the current chat, call it and verify
    `canvas_status` plus `get_editor_state` before designing. Read the installed
@@ -108,6 +111,12 @@ platforms fail explicitly; the installer never substitutes a different binary.
 ## Repair, update, and manual runtime
 
 - Rerun `npm run setup` after a network interruption. It reuses a verified cache.
+- If the desktop reports `No such file or directory` while the terminal works,
+  rerun setup to refresh the private Node registration, then run `npm run host-check`.
+  The launcher reads `~/.codex-openpencil/node-path`, independently of a custom
+  runtime state directory. It never changes your system PATH or another Node install.
+  A passing host check proves a fresh Codex connection can load the tools; verify
+  tool discovery separately in the current chat after reconnecting.
 - For an invalid configuration, inspect it first. `npm run setup -- --repair-runtime`
   explicitly selects the published runtime. It preserves the previous runtime
   directory; a corrupted immutable cache must be moved aside before a clean retry.

@@ -6,6 +6,8 @@ import { ensureRuntime, installRuntime } from '../plugins/openpencil/scripts/run
 import { CanvasController } from '../plugins/openpencil/scripts/canvas-controller.mjs';
 import { EditorSession } from '../plugins/openpencil/scripts/editor-session.mjs';
 import { runCodex } from './codex-command.mjs';
+import { registerNode } from './node-registration.mjs';
+import { verifyPluginHost } from './plugin-host-check.mjs';
 
 const args = process.argv.slice(2);
 if (args.some(arg => !['--runtime-only', '--repair-runtime'].includes(arg))) {
@@ -48,12 +50,16 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     // must not leave an apparently ready plugin with no usable editor.
     const runtime = args.includes('--repair-runtime') ? await installRuntime() : await ensureRuntime();
     await verifyRuntime(runtime.root);
+    let pluginHost;
     if (!args.includes('--runtime-only')) {
+      await registerNode();
       runCodex(['plugin', 'marketplace', 'add', root], { cwd: root });
       runCodex(['plugin', 'add', 'openpencil@zseven-openpencil'], { cwd: root });
+      pluginHost = await verifyPluginHost();
     }
     console.log(JSON.stringify({ ok: true, runtime: runtime.version, platform: `${process.platform}-${process.arch}`,
       verified: ['panel', 'native-edit', 'save', 'reopen'], pluginInstalled: !args.includes('--runtime-only'),
+      pluginHost,
       next: 'Call open_canvas if available. Otherwise run npm run canvas in a persistent terminal to use the canvas now; reconnect the plugin or start a new chat to load its tools.' }, null, 2));
   } catch (error) { console.error(`OpenPencil setup failed: ${error.message}`); process.exitCode = 1; }
 }

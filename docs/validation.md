@@ -1,3 +1,30 @@
+# Desktop plugin startup — 2026-10-16
+
+v0.3.2 fixes a reproduced desktop-only startup failure. The plugin was installed
+and enabled, while the desktop log repeatedly reported `No such file or directory`
+for `codex_openpencil`. An isolated profile using the same bundled Codex app-server
+(`0.162.0-alpha.17.2`) reproduced that error. A contained diagnostic launcher
+confirmed its child PATH could not find `node`, despite a working terminal.
+The separately configured native `openpencil` HTTP server is not the same server;
+no namespace collision was established, and its configuration was preserved.
+
+The executable launcher now uses the Node executable atomically registered by
+setup outside the package, with version validation and local fallbacks. Setup
+also checks the actual Codex plugin loader before reporting success. The same
+isolated bundled host now loads the canvas controls successfully. The user's
+local v0.3.2 installation passed runtime edit/save/reopen and a fresh Codex host
+check, exposing 186 tools including `open_canvas`, `canvas_status`,
+`canvas_selection` and `canvas_save`. All 69 Node tests and package checks passed.
+The launcher regression uses a restricted PATH and a private executable path
+containing spaces and an ampersand. Local logs: `artifacts/host-activation/`,
+`artifacts/v0.3.2-setup.log`, `artifacts/v0.3.2-tests.log`.
+
+This proves a new host connection can load the installed plugin. The current
+chat's catalog still lacks those controls. Native computer-use access to the
+Codex application was rejected by the tool, so no desktop UI reconnect, embedded
+canvas presentation, or actual shortcut message delivery is claimed here.
+The existing user design was not modified.
+
 # Chat-first selection edits — 2026-10-16
 
 v0.3.1 makes the current Codex chat the default edit input. The standalone panel

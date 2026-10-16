@@ -55,6 +55,8 @@ npm run setup
 
 请保留这个仓库目录。安装脚本将其注册为本地插件市场，安装 `openpencil@zseven-openpencil`。新插件可能需要重新连接或新建聊天才能加载工具；[终端画布入口](./INSTALL.md#instructions-for-the-installing-agent) 可让 Codex 在安装时的聊天中直接完成第一份设计。
 
+安装还会通过 Codex 的真实插件加载器检查工具，并私下记录当前 Node 可执行文件路径，解决桌面端 PATH 与终端不同导致的启动失败。可运行 `npm run host-check` 诊断加载状态；它不会新建聊天或修改设计。
+
 | 平台 | 运行包 | 系统要求 |
 | --- | --- | --- |
 | macOS | Apple Silicon、Intel | 基于 macOS 15 原生 runner 构建 |

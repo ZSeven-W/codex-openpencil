@@ -36,7 +36,12 @@ payload manifest, version and platform before configuring or starting it.
 For a new install, follow the public repository's
 [INSTALL.md](https://github.com/ZSeven-W/codex-openpencil/blob/main/INSTALL.md).
 Its `npm run setup` verifies an isolated native edit/save/reopen before installing
-the plugin. If this chat has not loaded newly installed MCP tools yet,
+the plugin, registers the current Node executable privately, and verifies canvas
+tools through Codex's actual plugin loader. For a desktop startup error such as
+`No such file or directory` despite a working terminal, rerun setup and
+`npm run host-check` from that repository. Do not rewrite unrelated MCP settings.
+A successful fresh host check does not prove this existing chat has reloaded.
+If this chat has not loaded newly installed MCP tools yet,
 `npm run canvas` in the repository provides the same editable canvas and accepts
 native tool requests through a persistent terminal's stdin. Use that entry point
 to complete the design now, then explain that reconnect loads the installed tools.
@@ -48,8 +53,9 @@ Never mistake a successful install for a verified live canvas.
    the actual connection; an installed package alone does not.
 2. If unavailable, run `node scripts/mcp-bridge.mjs --doctor` from the installed
    plugin directory (two levels above this file). The doctor reads the editor's
-   `~/.openpencil/.op-mcp-port` and verifies the instance identity. Node.js 22+
-   must be available in the local executor's PATH.
+   `~/.openpencil/.op-mcp-port` and verifies the instance identity. The plugin's
+   launcher uses the Node.js 22+ executable registered by setup, then known local
+   Node locations if needed; it never downloads a runtime to solve discovery.
 3. For a missing editor, use the official [OpenPencil installation instructions](https://github.com/ZSeven-W/openpencil).
    When launch is within the user's request, run `op start`, then enable MCP
    in the editor's Agent Settings. An old `op` binary may not discover the current

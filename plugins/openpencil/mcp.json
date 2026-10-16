@@ -3,8 +3,8 @@
   "mcpServers": {
     "codex_openpencil": {
       "type": "stdio",
-      "command": "node",
-      "args": ["${PLUGIN_ROOT}/scripts/mcp-bridge.mjs"],
+      "command": "./scripts/launch-mcp",
+      "args": [],
       "cwd": "${PLUGIN_ROOT}"
     }
   }

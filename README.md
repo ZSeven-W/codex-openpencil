@@ -55,6 +55,8 @@ npm run setup
 
 Keep the checkout in a persistent location. Setup registers it as a local marketplace and installs `openpencil@zseven-openpencil`. A newly installed plugin may need reconnecting or a new chat to load its tools; the [terminal canvas](./INSTALL.md#instructions-for-the-installing-agent) lets Codex complete the first design in the installation chat.
 
+Setup also verifies the tools through Codex's actual plugin loader. It records your current Node executable privately, so a desktop PATH that differs from your terminal does not prevent startup. Use `npm run host-check` to diagnose plugin loading without opening a chat or editing a design.
+
 | Platform | Runtime builds | System requirements |
 | --- | --- | --- |
 | macOS | Apple Silicon, Intel | Built on macOS 15 native runners |

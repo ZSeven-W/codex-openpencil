@@ -84,6 +84,16 @@ startup 20 seconds and UI saves 15 seconds. A timeout never retries an edit.
 
 ## Ownership and validation boundaries
 
+The portable MCP entry uses an executable launcher (with a Windows `.cmd`
+counterpart). Setup atomically records `process.execPath` in the private
+`~/.codex-openpencil/node-path` file. The launcher validates Node 22+ before
+starting the bridge, retaining literal paths with spaces and shell characters.
+It does not rely on desktop login-shell PATH import or change global settings.
+After registration, setup starts `codex app-server` and checks
+`mcpServerStatus/list` for the plugin's canvas tools. This uses the actual plugin
+manifest/cache/launcher path, opens no chat and performs no design mutation.
+It remains distinct from the loaded tools and visible UI in an existing chat.
+
 - `ZSeven-W/openpencil`: Rust engine, schemas, renderer and persistence.
 - `ZSeven-W/codex-openpencil`: plugin, session adapter, UI and workflows.
 - `ZSeven-W/dsh-openpencil`: DSH integration and compatible runtime packaging.

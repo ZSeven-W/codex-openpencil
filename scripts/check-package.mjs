@@ -52,11 +52,11 @@ for (const field of ['composerIcon', 'composerIconDark', 'logo', 'logoDark']) {
 }
 const mcp = await json(join(pluginRoot, 'mcp.json'));
 assert.equal(mcp.mcpServers.codex_openpencil.type, 'stdio');
-assert.equal(mcp.mcpServers.codex_openpencil.command, 'node');
-for (const arg of mcp.mcpServers.codex_openpencil.args) {
-  const path = arg.replace('${PLUGIN_ROOT}', pluginRoot);
-  assert.ok((await stat(path)).isFile());
+assert.equal(mcp.mcpServers.codex_openpencil.command, './scripts/launch-mcp');
+for (const path of ['scripts/launch-mcp', 'scripts/launch-mcp.cmd', 'scripts/mcp-bridge.mjs']) {
+  assert.ok((await stat(join(pluginRoot, path))).isFile());
 }
+if (process.platform !== 'win32') assert.ok((await stat(join(pluginRoot, 'scripts/launch-mcp'))).mode & 0o111);
 for (const asset of ['app.html', 'panel.html', 'panel.css', 'panel.js', 'selection.js']) {
   assert.ok((await stat(join(pluginRoot, 'ui', asset))).isFile(), `Missing canvas asset: ${asset}`);
 }
