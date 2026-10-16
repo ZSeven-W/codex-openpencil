@@ -1,5 +1,46 @@
 # Validation
 
+## Publication rehearsal — 2026-10-17
+
+Three new independent documents were exercised through the installed v0.3.9
+controller and its configured public Rust/WASM runtime: a fashion shopping phone
+screen (59 nodes), a studio dashboard (77), and a brand landing page (41).
+Each used real native MCP operations, a scoped selection change, comparison of
+an untouched neighboring region, native rendering, save, and independent-session
+reopen with a deep-equal document check. The phone retained one complete canonical
+status bar and three embedded existing photographs. No image generation or new
+stock-search validation was performed in this rehearsal.
+
+Native previews were inspected. Heuristic lint warnings remain for intentionally
+similar container fills, spacer/style differences, and a rotated artwork shape;
+this is not a zero-warning claim. One low-contrast landing-page wordmark was
+darkened within its existing palette, then saved and independently reopened; the
+whole document comparison confirmed that only this fill changed.
+
+In the user's existing Chrome profile, real pointer actions selected the phone
+board, opened Code, chose HTML, and clicked Generate. The request captured that
+board, page, framework and version. Its deterministic baseline contained incomplete
+layout, so it was used as a starting point for a separate runnable HTML
+implementation, rather than treated as a finished page. Actual browser actions
+verified category filtering, adding the knit product to the bag, a total of 599,
+and persistence after reload. The matching source completed the same request and
+visibly appeared under “Codex 已回填 · 项目见对话”. Clicking the panel's download
+button produced a 255,964-byte HTML file whose SHA-256 exactly matched the primary
+implementation. This closes the earlier unverified UI-download step for HTML.
+Later pointer selection reached the headline container and, with a double-click,
+its text node; the controller read the corresponding IDs while the completed
+code request remained bound to the original board. UI Save displayed “已保存”.
+
+The actual bundled Codex loader again discovered all 190 tools, including both
+code-status and completion controls. Package checks and all 74 plugin regression
+tests passed. The current running chat retained an older
+tool inventory, so the installed controller's terminal path was used for this
+rehearsal; it does not establish that the chat reconnected. Fresh-machine
+installation, live MCP Apps automatic message delivery, other code frameworks,
+and narrow physical-device acceptance were not repeated here. The existing
+dependency-audit limitations below are unchanged. Evidence and generated designs
+remain local under ignored `artifacts/prepublish-20261017/`.
+
 ## Code-panel handoff and source return — 2026-10-17
 
 v0.3.9 routes the existing embedded Code panel's explicit Generate action through
