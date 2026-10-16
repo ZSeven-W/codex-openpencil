@@ -51,7 +51,7 @@ for await (const line of createInterface({input:process.stdin})) {
  if(!q.id) continue;
  const controls=Object.fromEntries(['open_canvas','canvas_status','canvas_selection','canvas_save'].map(n=>[n,{}]));
  const result=q.method==='initialize'?{}:{data:process.env.CASE==='missing'?[]:[{name:'codex_openpencil',
- pluginId:'openpencil@zseven-openpencil',tools:process.env.CASE==='incomplete'?{}:controls,
+ pluginId:process.env.CASE==='foreign'?null:'openpencil@zseven-openpencil',tools:process.env.CASE==='incomplete'?{}:controls,
  toolsError:process.env.CASE==='failed'?'Node executable missing':null}]};
  console.log(JSON.stringify({id:q.id,result}));
 }`);
@@ -60,7 +60,7 @@ for await (const line of createInterface({input:process.stdin})) {
   assert.equal(status.ok, true);
   assert.equal(status.toolCount, 4);
   assert.deepEqual((await readFile(calls, 'utf8')).trim().split('\n'), ['initialize', 'initialized', 'mcpServerStatus/list']);
-  for (const [scenario, error] of [['missing', /did not load/], ['incomplete', /incomplete/], ['failed', /Node executable missing/]]) {
+  for (const [scenario, error] of [['missing', /did not load/], ['foreign', /another source/], ['incomplete', /incomplete/], ['failed', /Node executable missing/]]) {
     await assert.rejects(verifyPluginHost({ ...options, env: { ...options.env, CASE: scenario } }), error);
   }
 });

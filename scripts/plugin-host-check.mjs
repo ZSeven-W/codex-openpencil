@@ -43,6 +43,7 @@ export async function verifyPluginHost({ env = process.env, timeout = 45_000, co
     const status = await request('mcpServerStatus/list', { serverName: 'codex_openpencil', detail: 'toolsAndAuthOnly' });
     const server = status.data?.find(server => server.name === 'codex_openpencil');
     if (!server) throw new Error('Codex did not load the OpenPencil plugin server. Check plugin enablement and update Codex.');
+    if (server.pluginId !== 'openpencil@zseven-openpencil') throw new Error('Codex resolved codex_openpencil from another source. Inspect that MCP configuration before changing it.');
     if (server.toolsError) throw new Error(`Codex could not start OpenPencil: ${server.toolsError}`);
     const controls = ['open_canvas', 'canvas_status', 'canvas_selection', 'canvas_save'];
     if (controls.some(name => !server.tools?.[name])) throw new Error('Codex loaded an incomplete OpenPencil tool catalog. Reinstall the plugin and reconnect.');

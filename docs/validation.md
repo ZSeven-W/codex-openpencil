@@ -19,6 +19,16 @@ The launcher regression uses a restricted PATH and a private executable path
 containing spaces and an ampersand. Local logs: `artifacts/host-activation/`,
 `artifacts/v0.3.2-setup.log`, `artifacts/v0.3.2-tests.log`.
 
+The [six-platform fresh install matrix](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38886578454)
+passed with the public Codex CLI, including actual host loading after setup,
+installed-bridge native edit/save/reopen, terminal PNG/save flow and repeat setup.
+This also verifies Windows resolves the `.cmd` launcher for the portable command.
+The [Node 22/24 matrix](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38886577603)
+passed all six jobs, including the restricted-PATH launcher regression. A final
+host-check guard also requires the expected plugin identity, so a manually
+configured server with the same name cannot be mistaken for a loaded plugin;
+its negative cases and the user's actual host check passed locally.
+
 This proves a new host connection can load the installed plugin. The current
 chat's catalog still lacks those controls. Native computer-use access to the
 Codex application was rejected by the tool, so no desktop UI reconnect, embedded
