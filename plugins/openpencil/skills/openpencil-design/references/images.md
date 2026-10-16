@@ -1,12 +1,25 @@
 # Image acquisition
 
-## Stock search is the default and fallback
+## Codex generation by default
 
-Keep existing/user-provided images unless the task asks to replace them. For new
-image slots, use `type: "image"`, explicit dimensions and a concrete English
+Preserve suitable existing/user-provided images. For new photo, illustration or
+product assets needed by the design, use the host's built-in `image_gen` by
+default. Follow `SKILL.md`: announce the intended assets and possible quota use
+in a brief progress update, then proceed without a separate permission question.
+Honor explicit no-generation/stock-only instructions and host-required approvals.
+
+Keep the resolved target IDs through generation and import. If a call times out,
+check for an existing output instead of resubmitting. Generate only the required
+asset; do not flatten the editable interface into an image. Preserve requested
+transparency and inspect the actual output. Reuse completed assets after an
+import/save failure. If generation is unavailable or fails, use stock search;
+do not switch implicitly to an API/CLI requiring separate credentials.
+
+## Stock search fallback and explicit stock-only requests
+
+For search slots, use `type: "image"`, explicit dimensions and a concrete English
 `imageSearchQuery` describing subject, action and composition. Omit `imagePrompt`
-when generation is not authorized. The presence of image intent in a node is not
-user consent to spend quota.
+for this search route.
 
 After structural repair, reread current node IDs. Run the native `enrich_images`
 with `root_ids` scoped to the requested roots or selected image nodes, then read
@@ -16,26 +29,13 @@ schema; if this runtime lacks `root_ids`, do not broaden a partial edit to the p
 
 `enrich_images` is search-only (Openverse with Wikimedia fallback). A slot with
 only `imagePrompt` is explicitly Generate and will be skipped. For an unresolved
-slot covered by the user's search/default-fallback choice, set a concrete
+slot covered by the task's search fallback or stock-only instruction, set a concrete
 `imageSearchQuery` and clear `imagePrompt` with `update_node` before enrichment.
-Both fields together mean Auto; prefer explicit Search for the default flow.
-Do not overwrite already populated or unrelated slots. No search result does not
-authorize generation: refine the query when appropriate, then report remaining
-missing assets honestly. Search uses network access; it does not call `image_gen`.
-
-## Authorized Codex generation
-
-Follow the consent rule in `SKILL.md` before any generation, including edits and
-regenerations. Keep the approved asset list, call count and resolved target IDs
-in the current task. Count submitted calls even when the result times out; check
-for an existing output instead of resubmitting. Use no more than the approved
-calls, and reuse completed assets after an import/save failure.
-
-Generate only the required photo, illustration or product asset with the host's
-built-in tool; do not flatten the whole editable interface into a generated image.
-Preserve transparency when requested. Inspect the actual generated image before
-using it. No built-in generation tool means use the search fallback, not an
-implicit switch to an API/CLI that requires separate credentials.
+Both fields together mean Auto; prefer explicit Search for the fallback flow.
+Do not overwrite already populated or unrelated slots. If search fails, refine
+the query when appropriate, then report missing assets honestly; do not loop back
+to generation or ignore a stock-only instruction. Search uses network access;
+it does not call `image_gen`.
 
 ## Import, inspect and persist
 
@@ -44,8 +44,8 @@ For a managed canvas:
 1. Persist a chosen generated asset in the user's project asset directory with a
    non-overwriting filename. Copy the actual output path returned by the tool, or
    materialize its available output bytes; do not guess a path or rely only on a
-   preview. If the host exposes neither readable bytes nor a file, report that
-   import is blocked rather than regenerating. Preserve each successful output
+   preview. If the host exposes neither readable bytes nor a file, report this
+   import limit and use stock fallback rather than regenerating. Preserve each successful output
    independently if other assets fail. User-supplied files can stay at their
    chosen location.
 2. Read the current canvas and target. Confirm the document, page and original

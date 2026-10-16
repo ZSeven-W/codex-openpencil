@@ -43,7 +43,7 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.6.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.7.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
@@ -67,13 +67,15 @@ those nodes and edits their subtrees, then inspects the preview and saved design
 
 ## Image acquisition
 
-The design skill defaults to native stock search. Quota-consuming generation
-requires a chat disclosure and explicit task/count permission before the host's
-`image_gen` call. Missing consent, capability or a failed generation uses scoped
-search fallback; explicit Generate-only slots must first be converted to Search
-under that fallback choice. The bridge never invokes a generation provider,
-configures an API key, tracks credits or claims host-level enforcement of consent.
-Host tools remain subject to the host's own availability and accounting.
+The design skill defaults new raster assets to the host's built-in `image_gen`.
+Before generation, Codex sends a brief chat progress notice explaining the intended
+assets and possible quota use, then proceeds without a separate per-call permission
+question. Explicit no-generation/stock-only requests take precedence. Unavailable
+or failed generation uses scoped native stock-search fallback; Generate-only slots
+must first be converted to Search for that route. Uncertain generation calls are
+not replayed, and unsuccessful stock search does not loop back to generation.
+The bridge never invokes a generation provider, configures an API key or tracks
+credits. Host tools retain their own availability, approvals and accounting.
 
 `canvas_import_image` is model-only and excluded from the panel RPC allowlist. It
 reads a regular local raster file up to 8 MiB, checks the expected document version,

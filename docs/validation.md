@@ -1,5 +1,33 @@
 # Validation
 
+## Default Codex image generation — 2026-10-16
+
+v0.3.7 replaces v0.3.6's opt-in image policy: new raster assets use the host's
+built-in `image_gen` by default. Codex announces the intended assets and possible
+quota use in chat, then continues without a separate per-call permission question.
+Explicit no-generation/stock-only instructions and host-required approvals take
+precedence. Unavailable/failed generation or unimportable output uses scoped
+stock search. Unknown generation results are inspected rather than blindly
+retried, and successful outputs are reused after import/save failures.
+
+Both README languages now show a prominent quota notice before the one-prompt
+install example. The skill, image/node references, manifest and architecture
+documentation agree on the new default, stock fallback and unchanged portable
+import/save flow. The Chinese selection documentation also matches the existing
+selection-only canvas. No canvas switch or prompt form was added.
+
+Package checks, all 66 regression tests and skill validation passed. The required
+isolated bridge smoke passed create/read/layout/lint/native PNG/save/reopen. Setup
+installed an identical local v0.3.7 plugin cache and verified actual bundled Codex
+host loading with 185 tools, plus native edit/save/reopen. The configured runtime
+and user designs were preserved. Logs are in
+`artifacts/v0.3.7-default-generation/`.
+
+This policy/documentation update did not call image generation or repeat stock
+search; it establishes no new host generation or quota-accounting result. The
+public-runtime search failures recorded for v0.3.6 remain applicable evidence,
+and the pinned runtime catalog is unchanged.
+
 ## Image consent and portable imports — 2026-10-16
 
 v0.3.6 defaults new image needs to stock search. The design skill requires a

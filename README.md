@@ -35,6 +35,8 @@
 
 ## One-prompt install and first design
 
+> **Image generation is enabled by default.** When a design needs new image assets, Codex uses its built-in image generation, which may consume your Codex image-generation quota. Say **“use stock images only”** to skip generation. Unavailable or failed generation falls back to stock search.
+
 Give Codex this:
 
 ```text
@@ -142,11 +144,11 @@ The canvas footer only shows the selected count and names. Selection context syn
 
 ### Images and generation quota
 
-New image needs use the native stock-search pipeline by default. Suitable existing or user-provided images are preserved. No generation toggle or provider setup is added to the canvas.
+New photos, illustrations and product imagery use Codex's built-in `image_gen` by default and may consume image-generation quota. Suitable existing or user-provided images are preserved. Say **“不要生图”**, **“只搜图”** or **“use stock images only”** to use stock search throughout the task.
 
-Before calling Codex's built-in `image_gen`, the design skill requires a chat notice explaining quota use, the intended assets and call count, followed by your explicit permission: **本次允许生图（消耗额度）** or **使用搜图素材**. Permission applies to that task and count; additional generations need renewed permission. Generation unavailable or failed uses search fallback, with the outcome reported. Searching never silently enables generation.
+Before generation, Codex sends a brief chat progress update with the intended assets and possible quota use, then continues without a separate per-call permission question. The host's own required approvals still apply. Unavailable or failed generation uses the native stock-search fallback, with the outcome reported. Uncertain generation calls are not blindly retried, and missing stock results are reported honestly. No generation toggle or provider setup is added to the canvas.
 
-Approved generated assets are saved in your project and imported into individual editable image nodes. `canvas_import_image` embeds local PNG/JPEG/WebP bytes, verifies the current page/document version and preserves the node's layout. The workflow then inspects the native preview and verifies the saved `.op`. The bridge does not invoke image providers or manage your quota: the permission rule guides Codex through the skill, while the host owns generation access and accounting.
+Generated assets are saved in your project and imported into individual editable image nodes. `canvas_import_image` embeds local PNG/JPEG/WebP bytes, verifies the current page/document version and preserves the node's layout. The workflow then inspects the native preview and verifies the saved `.op`. The bridge does not invoke image providers or manage your quota: the design skill guides Codex, while the host owns generation access and accounting.
 
 ### 3. Preview, save, and reopen
 

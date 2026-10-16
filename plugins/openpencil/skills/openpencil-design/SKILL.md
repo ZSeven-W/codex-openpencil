@@ -32,22 +32,23 @@ For a new phone screen, load `get_guidelines` with `topic: "mobile"` before
 creating its root frame. Use the Rust runtime's canonical status bar; do not
 hand-draw a replacement or use emoji for system indicators.
 
-## Image acquisition and quota consent
+## Image acquisition
 
-Default to stock search for new image needs; preserve suitable user-provided or
-existing images. An ordinary design request does not authorize quota-consuming
-generation. Before the first `image_gen` call, disclose that it uses the host's
-image-generation quota, describe the intended assets and number of calls, and
-offer **“本次允许生图（消耗额度）” / “使用搜图素材”** in the current chat.
-Wait for explicit consent to the disclosed task and count; silence is not consent.
-Reuse that consent within scope, honor revocation, and ask again for extra calls
-or regeneration. Do not invent a credit balance, price or refund guarantee.
-The canvas has no generation switch or provider configuration.
+For new photos, illustrations or product imagery needed by the design, use the
+host's available built-in `image_gen` by default, following its imagegen skill
+when available. Preserve suitable user-provided/existing images and keep native
+text, controls and vector artwork editable. Before generation, send a brief chat
+progress update describing the intended assets and noting that generation may
+consume Codex image-generation quota. Continue without a separate per-call
+permission question; respect the host's own required approvals. Do not invent a
+credit balance, price or refund guarantee.
 
-Use the host's available built-in `image_gen` after consent, following its imagegen
-skill when available. The plugin does not run generation itself or configure API
-keys. Missing/failed generation falls back to stock search, with a clear note;
-never silently switch providers, call a paid API, or retry an uncertain generation.
+Honor requests such as “不要生图”, “只搜图” or “use stock images only” throughout
+the task. The plugin does not run generation itself or configure API keys, and
+the canvas has no generation switch. Unavailable/failed generation falls back to
+stock search, with a clear note; never silently switch providers, call a separate
+paid API, or retry an uncertain generation. Reuse successful assets after an
+import/save failure instead of generating them again.
 If the brief requires exact generated content and stock would change that intent,
 explain the gap rather than claiming the stock image satisfies it.
 

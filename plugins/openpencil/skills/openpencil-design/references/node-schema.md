@@ -85,16 +85,19 @@ PascalCase + "Icon" suffix. Auto-resolved from Lucide set during post-processing
   "objectFit": "crop", "cornerRadius": 12 }
 ```
 
-Search slots (resolve with scoped `enrich_images` after structural repair):
+For a new raster asset, use Codex's built-in `image_gen` by default, then import
+its output into the image node. `imagePrompt` alone marks Generate intent;
+it does not invoke the host's tool automatically. Both acquisition fields mean
+Auto. Follow the [image workflow](images.md) for generation and portable imports.
+
+Search fallback or an explicit stock-only request (resolve with scoped
+`enrich_images` after structural repair):
 
 ```json
 { "type": "image", "width": 400, "height": 300,
   "imageSearchQuery": "modern office workspace natural light wide interior" }
 ```
 
-`imagePrompt` alone requests Generate; both fields mean Auto. Neither establishes
-consent to use image-generation quota. Use search by default and follow the
-[image workflow](images.md) for authorized Codex generation and portable imports.
 `design_refine` repairs structure; it is not proof that a real image was acquired.
 
 Image adjustments (all -100 to 100): `exposure`, `contrast`, `saturation`, `temperature`, `tint`, `highlights`, `shadows`.
