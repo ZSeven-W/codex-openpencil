@@ -216,11 +216,15 @@ Canvas controls remain discoverable with the desktop editor offline. Reconnect a
 
 MCP Apps use the initial host theme and live theme notifications. Standalone panels use `prefers-color-scheme`; Codex's in-app browser supplies its resolved app theme.
 
-Native resource loading, browser interaction and embedded Codex UI presentation are separate checks. Live embedded presentation remains unverified. All hosts use the current Codex chat for edit instructions; the plugin never sends a second chat prompt. See [evidence and remaining checks](./docs/validation.md).
+Native resource loading, browser interaction and embedded Codex UI presentation are separate checks. Live embedded presentation remains unverified. All hosts use the current Codex chat for edit instructions; only the explicit Code panel Generate action can send an implementation prompt when host messaging is available. See [evidence and remaining checks](./docs/validation.md).
 
 This plugin is distributed through the public GitHub repository and releases. It has not been submitted to OpenAI's public Plugin Directory.
 
 </details>
+
+## Design → Code
+
+Select a frame, open the right **Code** panel, choose a framework and click **Generate**. The panel first shows baseline source for preview, copy and download. An embedded host with MCP Apps messaging hands the captured target to the current Codex chat for a runnable implementation and checks. In a standalone browser, say **“continue converting to code”** in Codex. Codex returns the primary source to the panel; the full project and supporting files remain in your workspace. A changed design requires a fresh request.
 
 ## Development and verification
 

@@ -17,6 +17,23 @@ const validTheme = value => value === 'light' || value === 'dark';
 let compatibilityTheme = validTheme(window.openai?.theme) ? window.openai.theme : undefined;
 let colorScheme;
 let lastContext;
+const codegenRequests = new Set();
+
+async function handoffCodegen(value) {
+  if (typeof value.requestId !== 'string' || typeof value.prompt !== 'string' || value.prompt.length > 16_384 || codegenRequests.has(value.requestId)) return;
+  codegenRequests.add(value.requestId);
+  if (codegenRequests.size > 64) codegenRequests.delete(codegenRequests.values().next().value);
+  let status = 'unsupported';
+  try {
+    if (hostCapabilities.message?.text) {
+      const result = await request('ui/message', { role: 'user', content: [{ type: 'text', text: value.prompt }] });
+      status = result?.isError ? 'unknown' : 'accepted';
+    } else if (hostCapabilities.updateModelContext) {
+      await request('ui/update-model-context', { content: [{ type: 'text', text: value.prompt }] });
+    }
+  } catch { status = 'unknown'; }
+  frame.contentWindow?.postMessage({ type: 'codex-canvas/codegen-result', requestId: value.requestId, status }, panelOrigin);
+}
 
 function sendTheme() {
   if (opened) frame.contentWindow?.postMessage({ type:'codex-canvas/theme', colorScheme }, panelOrigin);
@@ -65,6 +82,7 @@ function show(result) {
 window.addEventListener('message', event => {
   if (event.source === frame.contentWindow && event.origin === panelOrigin) {
     if (event.data?.type === 'codex-canvas/ready') sendTheme();
+    if (event.data?.type === 'codex-canvas/codegen') void handoffCodegen(event.data);
     if (event.data?.type === 'codex-canvas/context' && hostCapabilities.updateModelContext) {
       const context = JSON.stringify({canvasFile:event.data.filePath,selection:event.data.selection});
       if (context !== lastContext) {
@@ -86,7 +104,7 @@ window.addEventListener('message', event => {
   if (message.method === 'ui/resource-teardown') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
 });
 (async()=>{
-  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.8'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
+  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.9'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
   hostCapabilities=initialized.hostCapabilities||{};
   // A notification received during initialization is newer than its response.
   if (!hostThemeChanged) acceptHostTheme(initialized.hostContext?.theme);

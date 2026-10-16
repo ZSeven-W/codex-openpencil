@@ -122,4 +122,5 @@ completion.
 
 Use the managed panel, native editor or browser editor for interactive editing. Do not describe
 a PNG preview as an embedded interactive canvas. Export to code only when the
-user asks, using the live server's supported frameworks.
+user asks, using the live server's supported frameworks. For Code panel requests or
+implementation handoffs, follow [the code-generation workflow](references/codegen.md).

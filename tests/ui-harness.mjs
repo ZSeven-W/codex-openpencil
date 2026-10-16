@@ -58,7 +58,10 @@ export async function createUiHarness(kind, { dark = false, embedded = true, has
   });
   let script = await readFile(new URL(`../plugins/openpencil/ui/${kind === 'app' ? 'app.html' : 'panel.js'}`, import.meta.url), 'utf8');
   if (kind === 'app') script = script.match(/<script>([\s\S]*?)<\/script>/)[1];
-  else script += '\n' + await readFile(new URL('../plugins/openpencil/ui/selection.js', import.meta.url), 'utf8');
+  else {
+    script += '\n' + await readFile(new URL('../plugins/openpencil/ui/selection.js', import.meta.url), 'utf8');
+    script += '\n' + await readFile(new URL('../plugins/openpencil/ui/codegen.js', import.meta.url), 'utf8');
+  }
   vm.runInContext(script, context);
   return { context, root, window, parent, frame, media, element, hostMessages, frameMessages, editorMessages, navigation, rpcCalls, clipboard, navigator, timers,
     rpc(handler, { raw = false } = {}) { rpcHandler = handler; rawRpc = raw; },

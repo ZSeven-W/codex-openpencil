@@ -57,7 +57,7 @@ for (const path of ['scripts/launch-mcp', 'scripts/launch-mcp.cmd', 'scripts/mcp
   assert.ok((await stat(join(pluginRoot, path))).isFile());
 }
 if (process.platform !== 'win32') assert.ok((await stat(join(pluginRoot, 'scripts/launch-mcp'))).mode & 0o111);
-for (const asset of ['app.html', 'panel.html', 'panel.css', 'panel.js', 'selection.js']) {
+for (const asset of ['app.html', 'panel.html', 'panel.css', 'panel.js', 'selection.js', 'codegen.js']) {
   assert.ok((await stat(join(pluginRoot, 'ui', asset))).isFile(), `Missing canvas asset: ${asset}`);
 }
 async function scan(dir) {

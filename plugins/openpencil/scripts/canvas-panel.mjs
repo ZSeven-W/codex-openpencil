@@ -5,8 +5,8 @@ import { MAX_BYTES } from './transport.mjs';
 
 export async function panelHtml(grant) {
   const root = new URL('../ui/', import.meta.url);
-  const [html, css, panelJs, selectionJs] = await Promise.all(['panel.html', 'panel.css', 'panel.js', 'selection.js'].map(name => readFile(new URL(name, root), 'utf8')));
-  const js = panelJs + '\n' + selectionJs;
+  const [html, css, panelJs, selectionJs, codegenJs] = await Promise.all(['panel.html', 'panel.css', 'panel.js', 'selection.js', 'codegen.js'].map(name => readFile(new URL(name, root), 'utf8')));
+  const js = panelJs + '\n' + selectionJs + '\n' + codegenJs;
   const json = JSON.stringify(grant).replace(/</g, '\\u003c');
   return html.replace('/* PANEL_CSS */', css).replace('/* PANEL_GRANT */', json).replace('/* PANEL_JS */', js);
 }
@@ -41,7 +41,7 @@ export async function startPanel(controller) {
           chunks.push(chunk);
         }
         const message = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if (!['canvas_status', 'canvas_selection', 'canvas_save', 'canvas_checkpoint'].includes(message.name)) {
+        if (!['canvas_status', 'canvas_selection', 'canvas_save', 'canvas_checkpoint', 'canvas_codegen_prepare', 'canvas_codegen_poll', 'canvas_codegen_cancel'].includes(message.name)) {
           reply(403, { error: 'Unsupported canvas control.' }); return;
         }
         const result = await controller.enqueue(() => controller.call(message.name, message.arguments || {}));

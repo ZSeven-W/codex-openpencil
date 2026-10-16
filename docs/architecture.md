@@ -43,11 +43,11 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.8.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.9.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
-opaque 256-bit URL capability, Host and Origin, and accepts only four panel controls.
+opaque 256-bit URL capability, Host and Origin, and accepts only the declared panel controls.
 The iframe lifecycle token stays in private UI state, outside model-facing text.
 Editor messages require the exact frame source and origin. No global MCP config
 or anonymous browser is created.
@@ -136,3 +136,27 @@ there are no install hooks.
 The UI follows [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)
 and [OpenAI UI extensions](https://developers.openai.com/plugins/build/chatgpt-ui).
 Repo marketplace distribution does not imply public directory approval.
+
+## Code panel handoff
+
+In `chat=host` mode, Generate captures the framework and active page/selected
+nodes, flushes pending edits and checks that the daemon document matches. The
+app-only `canvas_codegen_prepare` exports deterministic baseline source without
+calling an AI provider. The panel can preview, copy and download it immediately.
+The Rust bridge binds every response to its request, document lifetime/revision
+and framework; cancellation invalidates the pending request.
+
+The MCP Apps wrapper feature-detects host messaging and sends one explicit
+`ui/message` for Generate, using the [official host interface](https://developers.openai.com/plugins/build/chatgpt-ui).
+Source and origin checks, bounded deduplication and no message retries prevent
+replayed handoffs. No model call happens during selection polling. A host
+acknowledgment means delivery, not finished code. Standalone browser panels lack
+this host channel and display an instruction to continue in the current chat.
+
+Model-visible `canvas_codegen_status` keeps the captured brief and baseline
+available to Codex. After implementation and checks, `canvas_codegen_complete`
+reads the primary UTF-8 source and rechecks request identity and design version.
+It is excluded from browser RPC, as are arbitrary local file reads. App-only
+`canvas_codegen_poll` returns changed results for preview/copy/download; supporting
+files remain in the implementation project. Native standalone editor generation
+continues using its existing provider pipeline.

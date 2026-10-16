@@ -4,8 +4,9 @@ import { startPanel } from './canvas-panel.mjs';
 import { forward, errorReply } from './transport.mjs';
 import { readCanvasSelection } from './canvas-selection.mjs';
 import { importCanvasImage } from './canvas-images.mjs';
+import { prepareCodegen, completeCodegen, pollCodegen, cancelCodegen, codegenSummary, frameworks } from './canvas-codegen.mjs';
 
-export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.8.html';
+export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.9.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
 const filePath = { type: 'string', description: 'Absolute .op path; omit to create or reopen this session’s canvas.' };
 export const canvasTools = [
@@ -26,6 +27,19 @@ export const canvasTools = [
     annotations: { destructiveHint: true, openWorldHint: false } },
   { name: 'canvas_checkpoint', description: 'Persist a recovery draft of the managed canvas without overwriting its source.', inputSchema: schema({}),
     annotations: { destructiveHint: false, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
+  { name: 'canvas_codegen_prepare', description: 'Capture the Code panel target after flushing browser edits and export baseline source. Does not call a model or write project files.',
+    inputSchema: { ...schema({ uiRequestId: { type: 'string' }, framework: { type: 'string', enum: frameworks }, pageId: { type: 'string' },
+      nodeIds: { type: 'array', items: { type: 'string' } }, docJson: { type: 'string' } }), required: ['uiRequestId', 'framework', 'pageId', 'nodeIds', 'docJson'] },
+    annotations: { destructiveHint: false, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
+  { name: 'canvas_codegen_status', description: 'Read the latest Code panel conversion request, its fixed page/node IDs, design version, baseline source and handoff prompt. Use this before implementing a Code panel request; later selection changes do not change its target.',
+    inputSchema: schema({}), annotations: { readOnlyHint: true, openWorldHint: false } },
+  { name: 'canvas_codegen_complete', description: 'Return the primary implemented source file to the Code panel preview, copy and download actions. Pass the requestId from canvas_codegen_status and an absolute codePath after implementing and verifying the project. Reads the file; never writes it or changes the design. Rejects superseded requests and changed design versions.',
+    inputSchema: { ...schema({ requestId: { type: 'string' }, codePath: { type: 'string' } }), required: ['requestId', 'codePath'] },
+    annotations: { destructiveHint: false, openWorldHint: false } },
+  { name: 'canvas_codegen_cancel', description: 'Cancel the matching panel request without replaying a host message.', inputSchema: { ...schema({ uiRequestId: { type: 'string' } }), required: ['uiRequestId'] },
+    annotations: { destructiveHint: false, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
+  { name: 'canvas_codegen_poll', description: 'Read a changed Code panel result.', inputSchema: schema({ afterRevision: { type: 'integer' } }),
+    annotations: { readOnlyHint: true, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
 ];
 
 const toolResult = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], structuredContent: value });
@@ -54,8 +68,13 @@ export class CanvasController {
     if (name === 'canvas_import_image') return toolResult(await importCanvasImage(this.session, args));
     if (name === 'canvas_save') return toolResult(await this.session.save(args));
     if (name === 'canvas_checkpoint') return toolResult(await this.session.checkpoint());
+    if (name === 'canvas_codegen_prepare') return toolResult(await prepareCodegen(this, args));
+    if (name === 'canvas_codegen_status') return toolResult(this.codegenJob || null);
+    if (name === 'canvas_codegen_complete') return toolResult(await completeCodegen(this, args));
+    if (name === 'canvas_codegen_cancel') return toolResult(cancelCodegen(this, args));
+    if (name === 'canvas_codegen_poll') return toolResult(pollCodegen(this, args));
     const current = await readCanvasSelection(this.session);
-    return toolResult({ filePath: this.session.source, recoveryPath: this.session.draft, version: current.live.version, selection: current.selection });
+    return toolResult({ filePath: this.session.source, recoveryPath: this.session.draft, version: current.live.version, selection: current.selection, codegen: codegenSummary(this) });
   }
   async resource() {
     const panel = await this.ensurePanel();
@@ -83,7 +102,7 @@ export class CanvasController {
       const upstream = this.session ? await this.session.forward(message) : await forward(message, this.options);
       if (!Object.hasOwn(message, 'id')) return null;
       if (message.method === 'initialize') {
-        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.8' } };
+        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.9' } };
         result.capabilities = { ...result.capabilities, tools: { listChanged: true }, resources: {} };
         return reply(result);
       }
