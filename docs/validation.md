@@ -1,4 +1,22 @@
-# Desktop plugin startup — 2026-10-16
+# Validation
+
+## Compact selection strip — 2026-10-16
+
+v0.3.3 puts selection, chat guidance and the optional shortcut on one row.
+In the existing Chrome profile, the previous empty strip measured 62.2 px;
+the new collapsed strip measured 32 px at 720 px and 360 px widths. Light/dark
+themes, long selected names, the shortcut and edit progress stayed on one row
+without horizontal overflow. Opening the optional input expanded to 121 px.
+These measurements use the actual panel markup and CSS in isolated fixtures;
+they do not claim an appearance change in an already-open Codex panel.
+
+Package validation and all 69 regression tests passed, including selection
+synchronization, shortcut capability gating, progress and draft recovery.
+The local fixture and logs are in `artifacts/v0.3.3-compact/`.
+The local cached v0.3.3 plugin passed the bundled Codex host check (186 tools)
+and the isolated native edit/save/reopen installation check.
+
+## Desktop plugin startup — v0.3.2
 
 v0.3.2 fixes a reproduced desktop-only startup failure. The plugin was installed
 and enabled, while the desktop log repeatedly reported `No such file or directory`

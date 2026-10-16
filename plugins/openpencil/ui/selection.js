@@ -15,9 +15,9 @@ function selectionReadFailed(error) {
 function renderSelection(value) {
   selection = value?.count > 0 && Array.isArray(value.nodeIds) && value.count === value.nodeIds.length ? value : null;
   const names = selection?.nodes?.map(node => node.name || node.id).join('、') || '';
-  el('selection-label').textContent = selection ? `已选 ${selection.count} 个元素 · ${names}` : '先在画布中选中要修改的元素';
+  el('selection-label').textContent = selection ? `已选 ${selection.count} 个元素${names ? ` · ${names}` : ''}` : '选中元素后';
   el('selection-label').title = names;
-  el('selection-guide').textContent = selection ? '在当前 Codex 聊天描述修改，例如：“把选中的卡片改成深色”。' : '选中后，在当前 Codex 聊天描述你的修改要求。';
+  el('selection-guide').textContent = '在当前 Codex 聊天描述修改';
   el('edit-toggle').hidden = !canSendPrompt;
   el('edit-toggle').textContent = shortcutOpen ? '收起快捷输入' : '在画布内提要求';
   el('edit-toggle').ariaExpanded = String(canSendPrompt && shortcutOpen);
