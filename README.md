@@ -140,6 +140,14 @@ Select elements in the canvas, then describe your edit in the current Codex chat
 
 The canvas footer only shows the selected count and names. Selection context syncs to capable hosts without sending chat messages. Instructions, edit progress and results stay in Codex; there is no second prompt box inside the canvas. Codex verifies the current selection before editing, then inspects the preview and saved design.
 
+### Images and generation quota
+
+New image needs use the native stock-search pipeline by default. Suitable existing or user-provided images are preserved. No generation toggle or provider setup is added to the canvas.
+
+Before calling Codex's built-in `image_gen`, the design skill requires a chat notice explaining quota use, the intended assets and call count, followed by your explicit permission: **本次允许生图（消耗额度）** or **使用搜图素材**. Permission applies to that task and count; additional generations need renewed permission. Generation unavailable or failed uses search fallback, with the outcome reported. Searching never silently enables generation.
+
+Approved generated assets are saved in your project and imported into individual editable image nodes. `canvas_import_image` embeds local PNG/JPEG/WebP bytes, verifies the current page/document version and preserves the node's layout. The workflow then inspects the native preview and verifies the saved `.op`. The bridge does not invoke image providers or manage your quota: the permission rule guides Codex through the skill, while the host owns generation access and accounting.
+
 ### 3. Preview, save, and reopen
 
 > Check the layout, show me a preview, and save this design as an .op file in my project.

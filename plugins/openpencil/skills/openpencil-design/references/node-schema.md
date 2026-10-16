@@ -85,13 +85,17 @@ PascalCase + "Icon" suffix. Auto-resolved from Lucide set during post-processing
   "objectFit": "crop", "cornerRadius": 12 }
 ```
 
-AI image placeholders (resolved by `design:refine`):
+Search slots (resolve with scoped `enrich_images` after structural repair):
 
 ```json
 { "type": "image", "width": 400, "height": 300,
-  "imagePrompt": "A modern office workspace with natural light",
-  "imageSearchQuery": "modern office workspace" }
+  "imageSearchQuery": "modern office workspace natural light wide interior" }
 ```
+
+`imagePrompt` alone requests Generate; both fields mean Auto. Neither establishes
+consent to use image-generation quota. Use search by default and follow the
+[image workflow](images.md) for authorized Codex generation and portable imports.
+`design_refine` repairs structure; it is not proof that a real image was acquired.
 
 Image adjustments (all -100 to 100): `exposure`, `contrast`, `saturation`, `temperature`, `tint`, `highlights`, `shadows`.
 

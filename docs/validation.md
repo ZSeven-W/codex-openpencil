@@ -1,5 +1,46 @@
 # Validation
 
+## Image consent and portable imports — 2026-10-16
+
+v0.3.6 defaults new image needs to stock search. The design skill requires a
+chat disclosure of quota use, intended assets and call count, with explicit
+task-scoped permission before Codex's built-in generation. Missing permission,
+unavailable generation or failed generation uses scoped search fallback; search
+failure does not grant generation permission. This is skill guidance, not a
+host-enforced quota gate or an accounting/refund implementation. The canvas UI
+adds no toggle or prompt form.
+
+The model-only `canvas_import_image` imports local raster bytes into an existing
+image node, checks version/page/target, preserves geometry and unrelated nodes,
+and confirms readback without replaying uncertain writes. The panel RPC allowlist
+does not expose it. All 66 regression tests, package checks and skill validation
+passed, including stale/wrong targets, format/size limits and denied panel access.
+
+An isolated local development runtime imported the existing plugin icon, converted
+one Generate-only hint into a scoped Search slot and resolved it through the real
+stock pipeline (one target, one result). Native PNGs were inspected. Guarded save
+and independent reopen preserved the embedded bytes after deleting the original
+asset. The required native bridge smoke also passed create/read/layout/lint/PNG/
+save/reopen. Setup installed the identical v0.3.6 cache and verified actual bundled
+Codex host loading with 185 tools, including the new import control. The user's
+configured runtime and live designs were preserved.
+
+The existing cached public runtime at the catalog's pinned revision
+`40902a3fa595a78b6f97e9409875cef823b0e191` was reverified against all manifest
+hashes. Its image import, native rendering, guarded save and independent reopen
+after original-asset deletion passed. Stock search returned one target and one
+failure for each of two independent fixtures, including a simpler query; no
+public-runtime stock-search success is claimed. Its reopened PNG was inspected
+and showed the imported icon and the runtime's explicit missing-image fallback.
+The smoke reports search failure separately from passed import/reopen checks.
+This turn did not complete a new public-runtime download or change the catalog.
+
+No image-generation call was made: tests used an existing local PNG and native
+stock search. Host generation, quota accounting and real consent-dialog execution
+are not established by these checks. Evidence is retained locally under
+`artifacts/v0.3.6-images/`, including `native/run-gek6wD/report.json`,
+`public-native/run-zQUmpn/report.json`, the native PNGs and setup/check/test logs.
+
 ## Selection-only canvas — 2026-10-16
 
 v0.3.5 leaves instructions, progress and results in the current Codex chat. The

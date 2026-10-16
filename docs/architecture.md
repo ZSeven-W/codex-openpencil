@@ -12,8 +12,8 @@ MCP Apps resource -> capability-protected loopback panel -> full Rust WASM edito
 ```
 
 The Rust engine owns native design tools, layouts, rendering, undo and live sync.
-The plugin adds `open_canvas`, `canvas_status`, `canvas_selection`, `canvas_save`
-and app-only `canvas_checkpoint`. It reuses the complete editable engine.
+The plugin adds `open_canvas`, `canvas_status`, `canvas_selection`, `canvas_save`,
+model-only `canvas_import_image` and app-only `canvas_checkpoint`. It reuses the complete editable engine.
 Native images and JSON-RPC errors pass through.
 
 ## Process and document ownership
@@ -43,7 +43,7 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.5.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.6.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
@@ -64,6 +64,29 @@ row, prompt form or edit-request lifecycle. The wrapper deduplicates selection
 context updates to capable hosts and clears stale targets without sending a user
 message. Codex verifies the current selection through `canvas_selection`, reads
 those nodes and edits their subtrees, then inspects the preview and saved design.
+
+## Image acquisition
+
+The design skill defaults to native stock search. Quota-consuming generation
+requires a chat disclosure and explicit task/count permission before the host's
+`image_gen` call. Missing consent, capability or a failed generation uses scoped
+search fallback; explicit Generate-only slots must first be converted to Search
+under that fallback choice. The bridge never invokes a generation provider,
+configures an API key, tracks credits or claims host-level enforcement of consent.
+Host tools remain subject to the host's own availability and accounting.
+
+`canvas_import_image` is model-only and excluded from the panel RPC allowlist. It
+reads a regular local raster file up to 8 MiB, checks the expected document version,
+active page and existing image target, then performs one native node patch. Image
+bytes are embedded directly without exposing base64 to the conversation. The
+readback must match; unknown writes are never retried. Geometry and unrelated nodes
+are preserved, acquisition hints are cleared, and imports do not save the source
+file. The skill persists generated originals in the project, then inspects the
+native preview, saves the `.op` and verifies portable image data on reopen.
+Version/page checks precede the write; they are not an atomic compare-and-swap
+against simultaneous interactive edits.
+
+## Save and recovery
 
 The panel flushes the editor snapshot gate before Save. The controller compares
 that disk snapshot to the daemon's document, resolving only schema-owned image

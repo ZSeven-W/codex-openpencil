@@ -49,7 +49,8 @@ import { appendFileSync } from 'node:fs';
 for await (const line of createInterface({input:process.stdin})) {
  const q=JSON.parse(line); appendFileSync(process.env.CALLS,q.method+'\\n');
  if(!q.id) continue;
- const controls=Object.fromEntries(['open_canvas','canvas_status','canvas_selection','canvas_save'].map(n=>[n,{}]));
+ const controls=Object.fromEntries(['open_canvas','canvas_status','canvas_selection','canvas_import_image','canvas_save'].map(n=>[n,{}]));
+ if(process.env.CASE==='old-version') delete controls.canvas_import_image;
  const result=q.method==='initialize'?{}:{data:process.env.CASE==='missing'?[]:[{name:'codex_openpencil',
  pluginId:process.env.CASE==='foreign'?null:'openpencil@zseven-openpencil',tools:process.env.CASE==='incomplete'?{}:controls,
  toolsError:process.env.CASE==='failed'?'Node executable missing':null}]};
@@ -58,9 +59,9 @@ for await (const line of createInterface({input:process.stdin})) {
   const options = { command: { binary: process.execPath, prefix: [fixture] }, env: { ...process.env, CALLS: calls }, timeout: 3000 };
   const status = await verifyPluginHost(options);
   assert.equal(status.ok, true);
-  assert.equal(status.toolCount, 4);
+  assert.equal(status.toolCount, 5);
   assert.deepEqual((await readFile(calls, 'utf8')).trim().split('\n'), ['initialize', 'initialized', 'mcpServerStatus/list']);
-  for (const [scenario, error] of [['missing', /did not load/], ['foreign', /another source/], ['incomplete', /incomplete/], ['failed', /Node executable missing/]]) {
+  for (const [scenario, error] of [['missing', /did not load/], ['foreign', /another source/], ['incomplete', /incomplete/], ['old-version', /incomplete/], ['failed', /Node executable missing/]]) {
     await assert.rejects(verifyPluginHost({ ...options, env: { ...options.env, CASE: scenario } }), error);
   }
 });

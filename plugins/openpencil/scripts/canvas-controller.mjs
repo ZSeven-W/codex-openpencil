@@ -3,8 +3,9 @@ import { EditorSession } from './editor-session.mjs';
 import { startPanel } from './canvas-panel.mjs';
 import { forward, errorReply } from './transport.mjs';
 import { readCanvasSelection } from './canvas-selection.mjs';
+import { importCanvasImage } from './canvas-images.mjs';
 
-export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.5.html';
+export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.6.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
 const filePath = { type: 'string', description: 'Absolute .op path; omit to create or reopen this session’s canvas.' };
 export const canvasTools = [
@@ -15,6 +16,11 @@ export const canvasTools = [
     annotations: { readOnlyHint: true, openWorldHint: false } },
   { name: 'canvas_selection', description: 'Read the current managed canvas selection: exact node IDs, names, types, parents, active page and document version. Call before modifying selected elements from a chat prompt; read these nodes with batch_get, then edit only their subtrees. Empty selection means no target, never the entire page.',
     inputSchema: schema({}), annotations: { readOnlyHint: true, openWorldHint: false } },
+  { name: 'canvas_import_image', description: 'Embed a local PNG/JPEG/WebP (at most 8 MiB) into an existing image node in the managed canvas. Reads file bytes directly without putting base64 in chat. Requires the current document version and active page; preserves node ID, geometry and unrelated nodes. Clears acquisition hints after import. Does not generate images, call a provider, or save the source .op. After import inspect the native preview, canvas_save and verify reopen; never automatically retry an uncertain write.',
+    inputSchema: { ...schema({ filePath: { type: 'string', description: 'Absolute path to a local image asset.' },
+      nodeId: { type: 'string', minLength: 1 }, pageId: { type: 'string', minLength: 1 },
+      expectedVersion: { type: 'integer', minimum: 0 } }), required: ['filePath', 'nodeId', 'pageId', 'expectedVersion'] },
+    annotations: { destructiveHint: true, openWorldHint: false }, _meta: { ui: { visibility: ['model'] } } },
   { name: 'canvas_save', description: 'Save the managed canvas to its original path or a new absolute .op path. Refuses external changes or an existing Save As destination. UI must flush its snapshot first; never automatically retry.',
     inputSchema: schema({ filePath, docJson: { type: 'string', description: 'UI-only flushed document snapshot, used to reject stale saves.' } }),
     annotations: { destructiveHint: true, openWorldHint: false } },
@@ -45,6 +51,7 @@ export class CanvasController {
   async call(name, args) {
     if (name === 'open_canvas') return this.open(args);
     if (!this.session) throw new Error('Open a managed canvas with open_canvas first.');
+    if (name === 'canvas_import_image') return toolResult(await importCanvasImage(this.session, args));
     if (name === 'canvas_save') return toolResult(await this.session.save(args));
     if (name === 'canvas_checkpoint') return toolResult(await this.session.checkpoint());
     const current = await readCanvasSelection(this.session);
@@ -76,7 +83,7 @@ export class CanvasController {
       const upstream = this.session ? await this.session.forward(message) : await forward(message, this.options);
       if (!Object.hasOwn(message, 'id')) return null;
       if (message.method === 'initialize') {
-        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.5' } };
+        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.6' } };
         result.capabilities = { ...result.capabilities, tools: { listChanged: true }, resources: {} };
         return reply(result);
       }

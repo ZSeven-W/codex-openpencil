@@ -1,6 +1,6 @@
 {
   "name": "@zseven-w/codex-openpencil",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "private": true,
   "description": "OpenPencil design workflows and a local MCP bridge for Codex",
   "type": "module",
@@ -16,6 +16,7 @@
     "configure-runtime": "node scripts/configure-runtime.mjs",
     "canvas-smoke": "node scripts/canvas-smoke.mjs",
     "selection-smoke": "node scripts/selection-smoke.mjs",
+    "images-smoke": "node scripts/images-smoke.mjs",
     "mobile-smoke": "node scripts/mobile-smoke.mjs",
     "smoke": "node scripts/smoke.mjs",
     "setup": "node scripts/setup.mjs",

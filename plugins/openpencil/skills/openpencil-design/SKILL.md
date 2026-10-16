@@ -32,6 +32,29 @@ For a new phone screen, load `get_guidelines` with `topic: "mobile"` before
 creating its root frame. Use the Rust runtime's canonical status bar; do not
 hand-draw a replacement or use emoji for system indicators.
 
+## Image acquisition and quota consent
+
+Default to stock search for new image needs; preserve suitable user-provided or
+existing images. An ordinary design request does not authorize quota-consuming
+generation. Before the first `image_gen` call, disclose that it uses the host's
+image-generation quota, describe the intended assets and number of calls, and
+offer **“本次允许生图（消耗额度）” / “使用搜图素材”** in the current chat.
+Wait for explicit consent to the disclosed task and count; silence is not consent.
+Reuse that consent within scope, honor revocation, and ask again for extra calls
+or regeneration. Do not invent a credit balance, price or refund guarantee.
+The canvas has no generation switch or provider configuration.
+
+Use the host's available built-in `image_gen` after consent, following its imagegen
+skill when available. The plugin does not run generation itself or configure API
+keys. Missing/failed generation falls back to stock search, with a clear note;
+never silently switch providers, call a paid API, or retry an uncertain generation.
+If the brief requires exact generated content and stock would change that intent,
+explain the gap rather than claiming the stock image satisfies it.
+
+For image slots, search fallback and local-asset import, read the
+[image workflow](references/images.md). Images are assets within editable UI;
+keep text, controls and layout as native nodes.
+
 ## Build and edit
 
 For prompts such as “modify the selected elements”, call `canvas_selection` on
