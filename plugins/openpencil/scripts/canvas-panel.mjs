@@ -41,7 +41,7 @@ export async function startPanel(controller) {
           chunks.push(chunk);
         }
         const message = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if (!['canvas_status', 'canvas_selection', 'canvas_prepare_edit', 'canvas_save', 'canvas_checkpoint'].includes(message.name)) {
+        if (!['canvas_status', 'canvas_selection', 'canvas_save', 'canvas_checkpoint'].includes(message.name)) {
           reply(403, { error: 'Unsupported canvas control.' }); return;
         }
         const result = await controller.enqueue(() => controller.call(message.name, message.arguments || {}));

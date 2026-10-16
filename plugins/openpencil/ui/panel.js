@@ -146,7 +146,6 @@ async function refreshCanvas() {
     const result = await rpc('canvas_status');
     source = result.filePath || source; updateSource();
     renderSelection(result.selection);
-    renderEditProgress(result.editRequest);
     clearError('selection'); clearError('connection');
     if (connectionInterrupted) { connectionInterrupted = false; restoreStatus(); }
     if (savedVersion === null) savedVersion = result.version;

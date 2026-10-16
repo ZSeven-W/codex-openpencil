@@ -41,28 +41,15 @@ limit edits to those nodes and their descendants. An empty selection is not a
 request to edit the whole page: ask the user to select a target. For a desktop
 editor without a managed canvas, use `get_editor_state` and read its selection.
 
-Requests from the canvas prompt bar contain an **OpenPencil selection edit scope**
-with a file/recovery path, page ID, document version, request ID and exact node IDs.
-Use that captured scope even if the live selection has since changed. Verify the
-managed file and active page before reading/editing. If the same document is still
-open on another page, inspect `list_pages` and switch to the captured page; never
-open a different document over a user's managed canvas. If the target was deleted,
-the file does not match, or the intent is ambiguous after newer edits, stop and
-explain instead of choosing another target. Preserve unrelated nodes and reuse
-existing IDs where possible. Preview the affected roots after the edit, and
-distinguish a submitted prompt from an applied and visually checked result.
-
-The default workflow uses the current Codex chat: select in the canvas, then
-describe the edit in chat. Do not ask the user to copy internal selection IDs or
-requests. Read `canvas_selection` yourself when starting that chat edit.
-An optional canvas shortcut appears only when the host advertises message support;
-it starts collapsed and submits a captured request. For these requests, call
-`canvas_edit_status` with the captured `requestId` and `working` before editing.
-After actually viewing the affected screenshot, saving with `canvas_save`, and
-verifying the saved design, report `completed` with a brief verification summary.
-Report `failed` with the reason when stopping. Failed or uncertain writes must
-never be retried automatically. A host delivery acknowledgement proves submission
-only; neither a changed document version nor selection polling proves completion.
+Use the current Codex chat for instructions, progress and results. The canvas
+only shows selection status and synchronizes context; it has no prompt input or
+edit-request lifecycle. Do not ask the user to copy internal IDs. Treat host
+selection context as a hint and verify it with `canvas_selection` when starting
+the edit. Once the target is resolved, keep those node IDs through the edit rather
+than silently following later selection changes. If the document/page no longer
+matches or a target was deleted, stop and explain rather than choosing another
+target. Preview the affected roots and verify the saved design before reporting
+completion.
 
 - Create fresh UI trees using `batch_design.script`: sandboxed JavaScript with
   `I(parent, node)` and `K(kitRef, parent, overrides)`, helpers, arrays, and loops.

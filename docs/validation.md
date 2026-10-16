@@ -1,5 +1,43 @@
 # Validation
 
+## Selection-only canvas — 2026-10-16
+
+v0.3.5 leaves instructions, progress and results in the current Codex chat. The
+canvas shows only selected count/names in its existing 28 px footer; the extra
+32 px selection row, guide, optional prompt form, message submission and edit
+request lifecycle are removed. Selection context still synchronizes silently
+to capable hosts. `canvas_selection` remains available for verified edit targets;
+`canvas_prepare_edit` and `canvas_edit_status` are no longer advertised.
+
+Package validation, all 59 remaining regression tests and the design skill's
+validator passed. Coverage includes selection transitions, stale targets,
+context deduplication/recovery, removed controls, save/conflict warnings and
+checkpoint debouncing. The isolated native selection smoke passed single,
+nested, multiple and empty selection cases, preserved an unrelated sibling and
+the originally resolved target after a later selection change, and saved and
+reopened the result. The selected-subtree PNG was visually inspected.
+
+In the existing Chrome profile, actual pointer single-selection and Shift-click
+multi-selection updated the footer; a separate `canvas_selection` read confirmed
+both selected IDs. The real Rust/WASM panel had no prompt form or extra selection
+row. An owned host fixture was inspected at 360 px in light mode, then at 720 px
+after a live switch to dark; the selected targets persisted. An agent edit made
+the design dirty, clicking Save restored saved status, and independent reopen
+confirmed the persisted edit. These checks do not claim live embedded Codex UI
+presentation or an update to an already-open panel.
+
+The required bridge smoke passed native create/read/layout/lint/PNG/save/reopen.
+Setup installed the local v0.3.5 cache and verified actual bundled Codex host
+loading with 184 tools, plus native edit/save/reopen. This turn used the existing
+configured local OpenPencil 0.8.5 development runtime at revision
+`baf279c07ae71741358bcebacd25ee126c5df7df`; it does not establish a new public
+runtime installation result. The public runtime catalog is unchanged.
+
+Local logs, browser selection readback and the host fixture are in
+`artifacts/v0.3.5-selection/`. Native selection evidence is in
+`artifacts/v0.3.5-selection/native/run-wT9tSF/`; the pointer/save fixture is
+`artifacts/canvas-4WTSMu/`. All fixtures were isolated from user designs.
+
 ## Editor theme alignment — 2026-10-16
 
 v0.3.4 replaces the plugin's warm gray/olive chrome with the actual light/dark

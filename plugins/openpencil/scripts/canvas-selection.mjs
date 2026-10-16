@@ -1,6 +1,3 @@
-import { randomUUID } from 'node:crypto';
-import { snapshotMatches } from './document-format.mjs';
-
 const selectionError = (message, code) => Object.assign(new Error(message), { code });
 
 function editorState(reply) {
@@ -47,22 +44,4 @@ export async function readCanvasSelection(session, { fresh = false } = {}) {
   visit(page.children);
   if (after.nodeIds.some(id => !nodes.has(id))) throw selectionError('选中的元素已不存在，请重新选择。', 'SELECTION_STALE');
   return { live, selection: { ...after, count: after.nodeIds.length, nodes: after.nodeIds.map(id => nodes.get(id)) } };
-}
-
-export function prepareSelectionEdit({ prompt, expectedSelection, docJson }, current, session) {
-  if (typeof prompt !== 'string' || !prompt.trim() || prompt.length > 8000) throw new Error('请输入 1–8000 字的修改要求。');
-  if (!current.selection.count) throw selectionError('请先在画布中选中要修改的元素。', 'SELECTION_REQUIRED');
-  if (!sameSelection(expectedSelection, current.selection)) throw selectionError('选区已变化。请确认当前元素，再提交修改要求。', 'SELECTION_CHANGED');
-  if (docJson !== undefined && !snapshotMatches(JSON.parse(docJson), current.live)) {
-    throw new Error('画布内容尚未同步，请稍后重新提交。');
-  }
-  const requestId = randomUUID();
-  const scope = { requestId, filePath: session.source, recoveryPath: session.draft, version: current.live.version,
-    pageId: current.selection.pageId, nodeIds: current.selection.nodeIds };
-  const message = ['请根据以下要求修改 OpenPencil 中指定的元素。',
-    '范围已在提交时固定：仅修改这些元素及其子节点，保留其他元素。即使后续选区改变，也不要更换目标。',
-    '先用 canvas_edit_status 报告 working，再读取指定页面和元素；若文档、页面或元素不存在，停止并报告 failed。不要自动重试超时的写入。',
-    '完成修改后实际查看受影响区域的截图，调用 canvas_save 并验证保存，再用 canvas_edit_status 报告 completed 和检查结果。发送回执不代表修改完成。',
-    'OpenPencil selection edit scope:', JSON.stringify(scope), '', '用户修改要求：', prompt.trim()].join('\n');
-  return { requestId, ...scope, selection: current.selection, prompt: prompt.trim(), message };
 }

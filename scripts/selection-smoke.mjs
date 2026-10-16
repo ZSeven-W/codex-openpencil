@@ -14,7 +14,7 @@ process.env.OPENPENCIL_CODEX_STATE_DIR = join(output,'state');
 const filePath = join(output,'selection-test.op');
 const fill = color => [{type:'solid',color}];
 const text = (id,name,content,x) => ({id,name,type:'text',x,y:34,width:232,height:42,fontFamily:'DM Sans',fontSize:26,fontWeight:600,content,fill:fill('#25271F')});
-const initial = {version:'0.8.5',children:[{id:'board',name:'Selection prompt test',type:'frame',x:0,y:0,width:800,height:400,fill:fill('#F3F2EC'),children:[
+const initial = {version:'0.8.5',children:[{id:'board',name:'Chat selection test',type:'frame',x:0,y:0,width:800,height:400,fill:fill('#F3F2EC'),children:[
   {id:'card-a',name:'Selected card',type:'frame',x:36,y:88,width:344,height:224,cornerRadius:20,fill:fill('#D5DEA6'),children:[text('title-a','Selected title','Morning focus',28)]},
   {id:'card-b',name:'Untouched card',type:'frame',x:420,y:88,width:344,height:224,cornerRadius:20,fill:fill('#E4E1D4'),children:[text('title-b','Untouched title','Evening review',28)]},
 ]}]};
@@ -51,13 +51,10 @@ try {
   await select(controller,['card-a']);
   const selected = (await tool(controller,'canvas_selection')).structuredContent;
   assert.deepEqual(selected.selection.nodeIds,['card-a']);
-  const request = (await tool(controller,'canvas_prepare_edit',{prompt:'把选中的卡片改成深蓝底白字，标题改成 Deep focus。保留旁边的卡片。',expectedSelection:{pageId:'0',nodeIds:['card-a']}})).structuredContent;
-  await writeFile(join(output,'prepared-request.json'),JSON.stringify(request,null,2));
-  await tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'working',detail:'Inspecting captured selection in the isolated native fixture.'});
-  await assert.rejects(tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'completed',detail:'Premature completion must fail.'}),/No document change/);
-  // Simulate a later user selection change. The submitted prompt retains card-a.
+  // A chat edit resolves its target through canvas_selection before editing.
+  const captured = selected.selection;
+  await writeFile(join(output,'selection-scope.json'),JSON.stringify(selected,null,2));
   await select(controller,['card-b']);
-  const captured = JSON.parse(request.message.split('OpenPencil selection edit scope:\n')[1].split('\n')[0]);
   assert.deepEqual(captured.nodeIds,['card-a']);
   const read = await tool(controller,'batch_get',{nodeIds:captured.nodeIds,readDepth:3});
   assert.ok(JSON.stringify(read).includes('title-a'));
@@ -67,23 +64,17 @@ try {
   assert.equal(find(value,'title-a').content,'Deep focus');
   assert.deepEqual(find(value,'card-b'),otherBefore);
   await capture(controller,'selected-edit.png');
-  await assert.rejects(tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'completed',detail:'Unsaved completion must fail.'}),/Save the current/);
   await tool(controller,'canvas_save',{filePath});
-  await tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'completed',detail:'Smoke fixture: captured native screenshot, asserted selected subtree and untouched sibling, saved current version.'});
-  assert.equal((await tool(controller,'canvas_status')).structuredContent.editRequest.status,'completed');
-  report.cases.push({name:'request-progress-with-save-guards',passed:true});
   report.cases.push({name:'single-card-with-descendant',passed:true,untouchedSibling:true,retargetAfterSelectionChange:false});
   await select(controller,['title-a']);
   const nested = (await tool(controller,'canvas_selection')).structuredContent.selection;
   assert.equal(nested.nodes[0].parentId,'card-a');
-  await tool(controller,'canvas_prepare_edit',{prompt:'把选中的标题改为 Focus, restored。',expectedSelection:{pageId:'0',nodeIds:['title-a']}});
   await tool(controller,'update_node',{nodeId:'title-a',data:{content:'Focus, restored'}});
   assert.deepEqual(find((await controller.session.document()).document,'card-b'),otherBefore);
   report.cases.push({name:'nested-title',passed:true,parentId:nested.nodes[0].parentId});
   await select(controller,['title-a','title-b']);
   const multi = (await tool(controller,'canvas_selection')).structuredContent.selection;
   assert.deepEqual(multi.nodeIds,['title-a','title-b']);
-  await tool(controller,'canvas_prepare_edit',{prompt:'将选中的两个标题都增大到 30。',expectedSelection:{pageId:'0',nodeIds:multi.nodeIds}});
   const cardBefore = structuredClone(find((await controller.session.document()).document,'card-b'));
   for (const nodeId of multi.nodeIds) await tool(controller,'update_node',{nodeId,data:{fontSize:30}});
   value = (await controller.session.document()).document;
@@ -92,10 +83,9 @@ try {
   report.cases.push({name:'multi-selection',passed:true,nodeIds:multi.nodeIds});
   await select(controller,[]);
   assert.equal((await tool(controller,'canvas_selection')).structuredContent.selection.count,0);
-  await assert.rejects(tool(controller,'canvas_prepare_edit',{prompt:'Change',expectedSelection:{pageId:'0',nodeIds:['card-a']}}),/先在画布/);
   await select(controller,['card-b']);
-  await assert.rejects(tool(controller,'canvas_prepare_edit',{prompt:'Change',expectedSelection:{pageId:'0',nodeIds:['card-a']}}),/选区已变化/);
-  report.cases.push({name:'empty-and-stale-selection',passed:true});
+  assert.deepEqual((await tool(controller,'canvas_selection')).structuredContent.selection.nodeIds,['card-b']);
+  report.cases.push({name:'empty-and-current-selection',passed:true});
   await capture(controller,'after.png');
   const saved = (await tool(controller,'canvas_save',{filePath})).structuredContent;
   assert.ok((await readFile(filePath,'utf8')).includes('Focus, restored'));

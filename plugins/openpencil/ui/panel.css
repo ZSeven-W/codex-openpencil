@@ -190,15 +190,23 @@ footer {
   background:var(--surface);
 }
 #document-label {
-  max-width:55%;
+  flex:1;
+  min-width:0;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-#recovery {
+#selection-label {
   margin-left:auto;
+  min-width:0;
+  max-width:55%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--text);
 }
 .live-dot {
+  flex:none;
   width:5px;
   height:5px;
   border-radius:50%;
@@ -270,75 +278,11 @@ dialog input {
   gap:8px;
   margin-top:24px;
 }
-.selection-editor {
-  flex:none;
-  padding:0 12px;
-  border-top:1px solid var(--border);
-  background:var(--surface);
-}
-.selection-heading {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  height:31px;
-  min-width:0;
-  font-size:11px;
-}
-#selection-label {
-  min-width:0;
-  max-width:55%;
-  flex:0 1 auto;
-  font-weight:500;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-#edit-feedback {
-  margin-left:auto;
-  min-width:0;
-  max-width:65%;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  color:var(--muted);
-  font-size:11px;
-}
-#edit-feedback[data-state="working"] { color:var(--text); }
-#edit-feedback[data-state="completed"] { color:var(--success); }
-#edit-feedback:empty { display:none; }
-.selection-heading:has(#edit-feedback:not(:empty)) #selection-guide { display:none; }
-#selection-guide { flex:1; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); line-height:16px; }
-#edit-toggle { flex:none; margin-left:auto; padding:3px 8px; font-size:11px; }
-#edit-shortcut { padding:2px 0 8px; }
-#edit-form {
-  display:flex;
-  align-items:stretch;
-  gap:10px;
-}
-textarea {
-  resize:vertical;
-  min-height:48px;
-  max-height:180px;
-  border:1px solid var(--input-border);
-  border-radius:7px;
-  padding:9px 11px;
-  background:var(--input-background);
-  color:var(--text);
-  font:inherit;
-  line-height:1.5;
-}
-textarea::placeholder { color:var(--subtle); }
-#edit-prompt { flex:1; min-width:0; }
-#edit-submit { flex:none; align-self:center; min-width:112px; }
-#edit-hint { margin:6px 0 0; font-size:10px; color:var(--muted); }
-.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 [hidden] {
   display:none!important;
 }
 @media(max-width:650px) {
-  .selection-editor { padding:0 10px; }
-  .selection-heading { gap:6px; }
-  .context,kbd,#recovery {
+  .context,kbd {
     display:none;
   }
   header {

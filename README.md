@@ -138,7 +138,7 @@ Select a card or heading on the canvas, then tell Codex:
 
 Select elements in the canvas, then describe your edit in the current Codex chat. Codex reads `canvas_selection` to resolve the active page and node IDs, and confines edits to those subtrees. No copying requests or element IDs is needed.
 
-Hosts that advertise direct message support also offer a collapsed **Describe an edit here** shortcut, with a **Modify selection** action. Its request captures the selection at submission time. Submitted, working, and completed are distinct states: Codex reports completion only after inspecting the preview and saving the current design. Empty or stale selections block submission, and failed sends preserve your draft.
+The canvas footer only shows the selected count and names. Selection context syncs to capable hosts without sending chat messages. Instructions, edit progress and results stay in Codex; there is no second prompt box inside the canvas. Codex verifies the current selection before editing, then inspects the preview and saved design.
 
 ### 3. Preview, save, and reopen
 
@@ -204,7 +204,7 @@ Canvas controls remain discoverable with the desktop editor offline. Reconnect a
 
 MCP Apps use the initial host theme and live theme notifications. Standalone panels use `prefers-color-scheme`; Codex's in-app browser supplies its resolved app theme.
 
-Native resource loading, browser interaction, embedded Codex UI presentation, and automatic `ui/message` follow-up delivery are separate checks. Live embedded presentation and automatic follow-up delivery remain unverified; standalone panels use the current Codex chat for edit instructions. See [evidence and remaining checks](./docs/validation.md).
+Native resource loading, browser interaction and embedded Codex UI presentation are separate checks. Live embedded presentation remains unverified. All hosts use the current Codex chat for edit instructions; the plugin never sends a second chat prompt. See [evidence and remaining checks](./docs/validation.md).
 
 This plugin is distributed through the public GitHub repository and releases. It has not been submitted to OpenAI's public Plugin Directory.
 

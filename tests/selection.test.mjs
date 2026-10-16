@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { readCanvasSelection, prepareSelectionEdit } from '../plugins/openpencil/scripts/canvas-selection.mjs';
-import { CanvasController } from '../plugins/openpencil/scripts/canvas-controller.mjs';
+import { readCanvasSelection } from '../plugins/openpencil/scripts/canvas-selection.mjs';
+import { CanvasController, canvasTools } from '../plugins/openpencil/scripts/canvas-controller.mjs';
 import { EditorSession } from '../plugins/openpencil/scripts/editor-session.mjs';
 import { createUiHarness, initializeApp, openPanel, settle } from './ui-harness.mjs';
 
@@ -40,27 +40,13 @@ test('Missing nodes, page switches and failed selection reads cannot broaden an 
   await assert.rejects(readCanvasSelection({forward:async()=>({result:{isError:true}})}),/Cannot read/);
 });
 
-test('Prompt preparation freezes the scope and rejects empty, stale or unsynced requests', async () => {
-  const active = session(), current = await readCanvasSelection(active);
-  const input = {prompt:'把标题改成蓝色', expectedSelection:{pageId:'0',nodeIds:['title']}, docJson:JSON.stringify(current.live.document)};
-  const result = prepareSelectionEdit(input,current,active);
-  assert.deepEqual(result.nodeIds,['title']);
-  assert.equal(result.pageId,'0'); assert.equal(result.version,7);
-  assert.match(result.message,/把标题改成蓝色/); assert.match(result.message,/仅修改/);
-  assert.ok(!result.message.includes('Other card'));
-  assert.throws(()=>prepareSelectionEdit({...input,expectedSelection:{pageId:'0',nodeIds:['other']}},current,active),/选区已变化/);
-  assert.throws(()=>prepareSelectionEdit({...input,docJson:JSON.stringify({children:[]})},current,active),/尚未同步/);
-  assert.throws(()=>prepareSelectionEdit({...input,prompt:' '},current,active),/请输入/);
-  assert.throws(()=>prepareSelectionEdit(input,{...current,selection:selection([])},active),/先在画布/);
-});
-
-test('Managed selection tool returns typed state and prepare failures do not invoke mutations', async () => {
+test('Managed selection reads are available to Codex without preparing an edit request', async () => {
   const controller = new CanvasController(); controller.session = session();
   const read = await controller.call('canvas_selection',{});
   assert.deepEqual(read.structuredContent.selection.nodeIds,['title']);
-  const result = await controller.dispatch({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'canvas_prepare_edit',arguments:{prompt:'Change',expectedSelection:{pageId:'0',nodeIds:['other']}}}});
-  assert.equal(result.result.isError,true);
-  assert.equal(result.result.structuredContent.code,'SELECTION_CHANGED');
+  assert.equal(read.structuredContent.version,7);
+  assert.equal('editRequest' in read.structuredContent,false);
+  assert.ok(!canvasTools.some(tool=>['canvas_prepare_edit','canvas_edit_status'].includes(tool.name)));
 });
 
 test('Selection transition codes survive both tool and panel transports without replaying a read', async t => {
@@ -94,173 +80,73 @@ test('Selection polling reuses unchanged document images and invalidates on vers
 function panelMessage(app, url, data, origin = new URL(url).origin) {
   app.window.emit('message',{source:app.frame.contentWindow,origin,data});
 }
-test('Only the trusted frame can send a prompt, and the host must acknowledge delivery', async () => {
+test('Selection context is synchronized, deduplicated and cleared without sending a chat prompt', async () => {
   const app = await createUiHarness('app');
-  await initializeApp(app,'dark',{serverTools:{},message:{text:{}},updateModelContext:{text:{}}});
+  await initializeApp(app,'light',{serverTools:{},message:{text:{}},updateModelContext:{text:{}}});
   const url = await openPanel(app);
-  panelMessage(app,url,{type:'codex-canvas/ready'});
-  assert.equal(app.frameMessages.at(-1).data.canSendPrompt,true);
-  const value = {type:'codex-canvas/prompt',requestId:'req-1',message:'Modify title only'};
-  panelMessage(app,url,value,'https://foreign.example');
-  assert.ok(!app.hostMessages.some(item=>item.data.method==='ui/message'));
-  panelMessage(app,url,value); panelMessage(app,url,value);
-  const sent = app.hostMessages.filter(item=>item.data.method==='ui/message');
-  assert.equal(sent.length,1); assert.equal(sent[0].data.params.role,'user');
-  assert.ok(!app.frameMessages.some(item=>item.data.type==='codex-canvas/prompt-result'));
-  app.host({jsonrpc:'2.0',id:sent[0].data.id,result:{}}); await settle();
-  assert.equal(app.frameMessages.at(-1).data.ok,true);
-  panelMessage(app,url,{...value,requestId:'req-2'});
-  const second = app.hostMessages.at(-1).data;
-  app.host({jsonrpc:'2.0',id:second.id,result:{isError:true}}); await settle();
-  assert.equal(app.frameMessages.at(-1).data.ok,false);
-  assert.equal(app.hostMessages.filter(item=>item.data.method==='ui/message').length,2);
-});
-
-test('Unsupported hosts reject shortcut sends and context updates are deduplicated and cleared', async () => {
-  const app = await createUiHarness('app'); await initializeApp(app,'light'); const url = await openPanel(app);
-  panelMessage(app,url,{type:'codex-canvas/ready'});
-  assert.equal(app.frameMessages.at(-1).data.canSendPrompt,false);
-  panelMessage(app,url,{type:'codex-canvas/prompt',requestId:'req',message:'Change'}); await settle();
-  assert.equal(app.frameMessages.at(-1).data.ok,false);
   const value = {type:'codex-canvas/context',filePath:'/design.op',selection:selection(['title'])};
   panelMessage(app,url,value); panelMessage(app,url,value);
-  assert.equal(app.hostMessages.filter(item=>item.data.method==='ui/update-model-context').length,1);
+  const updates = () => app.hostMessages.filter(item=>item.data.method==='ui/update-model-context');
+  assert.equal(updates().length,1);
+  assert.deepEqual(JSON.parse(updates()[0].data.params.content[0].text).selection.nodeIds,['title']);
   panelMessage(app,url,{...value,selection:selection([])});
-  assert.equal(app.hostMessages.filter(item=>item.data.method==='ui/update-model-context').length,2);
+  assert.equal(updates().length,2);
+  panelMessage(app,url,{...value,selection:null});
+  assert.equal(updates().length,3);
+  assert.equal(JSON.parse(updates()[2].data.params.content[0].text).selection,null);
+  panelMessage(app,url,{type:'codex-canvas/prompt',requestId:'obsolete',message:'Change'});
+  await settle();
+  assert.ok(!app.hostMessages.some(item=>item.data.method==='ui/message'));
 });
 
-async function readyPanel(direct = false) {
-  const ui = await createUiHarness('panel',{embedded:direct});
-  if (direct) ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:true});
+test('Failed context updates can resynchronize, while unsupported hosts send no context', async () => {
+  const app = await createUiHarness('app'); await initializeApp(app,'light');
+  const url = await openPanel(app);
+  const value = {type:'codex-canvas/context',filePath:'/design.op',selection:selection(['title'])};
+  panelMessage(app,url,value);
+  const first = app.hostMessages.at(-1).data;
+  app.host({jsonrpc:'2.0',id:first.id,error:{message:'Unavailable'}}); await settle();
+  panelMessage(app,url,value);
+  assert.equal(app.hostMessages.filter(item=>item.data.method==='ui/update-model-context').length,2);
+  const unsupported = await createUiHarness('app'); await initializeApp(unsupported,'light',{serverTools:{}});
+  panelMessage(unsupported,await openPanel(unsupported),value);
+  assert.ok(!unsupported.hostMessages.some(item=>item.data.method==='ui/update-model-context'));
+});
+
+async function readyPanel(embedded = true) {
+  const ui = await createUiHarness('panel',{embedded});
   ui.editor({type:'op-bridge/ready',generation:1,revision:0});
-  ui.rpc(({name,arguments:args}) => name === 'canvas_prepare_edit'
-    ? {requestId:'prepared-1',message:JSON.stringify(args),selection:selection(['title'])}
-    : {selection:selection(['title']),version:7});
-  await ui.state('refreshSelection()');
-  ui.element('edit-prompt').value = '改成蓝色'; ui.element('edit-prompt').oninput();
+  ui.rpc(() => ({selection:selection(['title']),version:7}));
+  await ui.state('refreshCanvas()');
   return ui;
 }
-async function flushPanel(ui) {
-  const pending = ui.editorMessages.findLast(item=>item.type==='op-bridge/snapshot');
-  ui.editor({type:'op-bridge/snapshot-result',requestId:pending.requestId,docJson:JSON.stringify(live().document),generation:1,revision:0});
-  await settle();
-}
 
-test('Standalone canvas guides users to the current chat and cannot submit a second prompt', async () => {
-  const ui = await readyPanel();
-  assert.match(ui.element('selection-guide').textContent,/当前 Codex 聊天/);
-  assert.equal(ui.element('edit-toggle').hidden,true);
-  assert.equal(ui.element('edit-shortcut').hidden,true);
-  assert.equal(ui.element('edit-submit').disabled,true);
-  await ui.state('submitSelectionPrompt()');
-  assert.equal(ui.editorMessages.filter(item=>item.type==='op-bridge/snapshot').length,0);
-  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-  assert.equal(ui.clipboard.length,0);
-  assert.ok(!ui.hostMessages.some(item=>item.data.type==='codex-canvas/prompt'));
-  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:true});
-  assert.equal(ui.element('edit-toggle').hidden,true,'Standalone window messages cannot advertise host capabilities');
-});
-
-test('Only a capable host exposes the optional shortcut and revocation preserves its draft', async () => {
-  const ui = await readyPanel(true);
-  assert.equal(ui.element('edit-toggle').hidden,false);
-  assert.equal(ui.element('edit-shortcut').hidden,true,'Chat is the default input even in capable hosts');
-  ui.element('edit-toggle').onclick();
-  assert.equal(ui.element('edit-shortcut').hidden,false);
-  assert.equal(ui.element('edit-toggle').ariaExpanded,'true');
-  assert.equal(ui.element('edit-submit').textContent,'修改选中内容');
-  const submitted = ui.state('submitSelectionPrompt()');
-  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:false});
-  await flushPanel(ui); await submitted;
-  assert.equal(ui.element('edit-shortcut').hidden,true);
-  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-  assert.ok(!ui.rpcCalls.some(call=>JSON.parse(call.options.body).name==='canvas_prepare_edit'));
-  assert.ok(!ui.hostMessages.some(item=>item.data.type==='codex-canvas/prompt'));
-});
-
-test('Direct prompt preserves text on rejection/timeout and clears it only after a trusted acknowledgement', async () => {
-  const ui = await readyPanel(true);
-  const submitted = ui.state('submitSelectionPrompt()');
-  ui.state('renderSelection({pageId:"0",nodeIds:["other"],count:1,nodes:[]})');
-  await flushPanel(ui);
-  assert.equal(JSON.parse(ui.hostMessages.find(item=>item.data.type==='codex-canvas/prompt').data.message).expectedSelection.nodeIds[0],'title');
-  const sent = ui.hostMessages.find(item=>item.data.type==='codex-canvas/prompt').data;
-  ui.host({type:'codex-canvas/prompt-result',requestId:sent.requestId,ok:true},'https://foreign.example');
-  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-  ui.host({type:'codex-canvas/prompt-result',requestId:sent.requestId,ok:false,error:'Rejected'}); await submitted;
-  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-  const retry = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
-  ui.host({type:'codex-canvas/prompt-result',requestId:sent.requestId,ok:true}); await retry;
-  assert.equal(ui.element('edit-prompt').value,'');
-  assert.equal(ui.element('edit-feedback').dataset.state,'submitted');
-  assert.doesNotMatch(ui.element('edit-feedback').textContent,/已完成|正在修改/);
-  ui.element('edit-prompt').value = 'Other edit';
-  const timeout = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
-  const timer = [...ui.timers].find(([,fn])=>String(fn).includes('发送状态未确认'));
-  timer[1](); await timeout;
-  assert.equal(ui.element('edit-prompt').value,'Other edit');
-  assert.equal(ui.hostMessages.filter(item=>item.data.type==='codex-canvas/prompt').length,3);
-});
-
-test('Empty and failed selections disable submission without dropping the prompt', async () => {
-  const ui = await readyPanel(true);
-  ui.state('renderSelection({count:0,nodeIds:[],nodes:[]})');
-  assert.equal(ui.element('edit-submit').disabled,true);
-  await ui.state('submitSelectionPrompt()'); assert.equal(ui.editorMessages.filter(item=>item.type==='op-bridge/snapshot').length,0);
-  ui.rpc(()=>{throw new Error('Offline');}); await ui.state('refreshSelection()');
-  assert.equal(ui.element('edit-submit').disabled,true); assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-});
-
-test('Matching agent reports establish progress; unrelated edits and delivery acknowledgements do not', async () => {
-  const ui = await readyPanel(true);
-  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
-  ui.host({type:'codex-canvas/prompt-result',requestId:'prepared-1',ok:true}); await submitted;
-  ui.rpc(()=>({version:99,selection:selection(['other']),editRequest:{requestId:'unrelated',status:'completed'}}));
-  await ui.state('refreshCanvas()');
-  assert.equal(ui.element('edit-feedback').dataset.state,'submitted');
-  for (const status of ['working','completed']) {
-    ui.rpc(()=>({version:99,selection:selection(['other']),editRequest:{requestId:'prepared-1',status,detail:'Checked screenshot and saved'}}));
+test('Selection reminder follows single, multiple and cleared targets without an edit workflow', async () => {
+  for (const embedded of [true,false]) {
+    const ui = await readyPanel(embedded);
+    assert.equal(ui.element('selection-label').textContent,'已选 1 个元素 · title');
+    ui.rpc(() => ({selection:selection(['card','title']),version:7}));
     await ui.state('refreshCanvas()');
-    assert.equal(ui.element('edit-feedback').dataset.state,status);
+    assert.equal(ui.element('selection-label').textContent,'已选 2 个元素 · card、title');
+    ui.rpc(() => ({selection:selection([]),version:7}));
+    await ui.state('refreshCanvas()');
+    assert.equal(ui.element('selection-label').textContent,'未选中元素');
+    assert.equal(ui.editorMessages.filter(item=>item.type==='op-bridge/snapshot').length,0);
+    assert.ok(ui.rpcCalls.every(item=>JSON.parse(item.options.body).name==='canvas_status'));
+    assert.ok(!ui.hostMessages.some(item=>item.data.type==='codex-canvas/prompt'));
   }
-  assert.match(ui.element('edit-feedback').textContent,/已完成/);
 });
 
-test('Failed edit reports restore the submitted prompt without replacing a new draft', async () => {
-  const ui = await readyPanel(true);
-  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
-  ui.host({type:'codex-canvas/prompt-result',requestId:'prepared-1',ok:true}); await submitted;
-  ui.state('renderEditProgress({requestId:"prepared-1",status:"failed",detail:"Stopped"})');
-  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-  ui.element('edit-prompt').value='';
-  ui.state('renderEditProgress({requestId:"prepared-1",status:"failed",detail:"Stopped"})');
-  assert.equal(ui.element('edit-prompt').value,'','Repeated status polls must allow clearing the restored draft');
-  ui.element('edit-prompt').value='新的修改';
-  ui.state('renderEditProgress({requestId:"prepared-1",status:"failed",detail:"Stopped"})');
-  assert.equal(ui.element('edit-prompt').value,'新的修改');
-});
-
-test('An earlier completed request cannot replace the warning for a new failed submission', async () => {
-  const ui = await readyPanel(true);
-  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
-  ui.host({type:'codex-canvas/prompt-result',requestId:'prepared-1',ok:true}); await submitted;
-  ui.state('renderEditProgress({requestId:"prepared-1",status:"completed"})');
-  ui.element('edit-prompt').value='新请求';
-  const next = ui.state('submitSelectionPrompt()');
-  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:false});
-  await flushPanel(ui); await next;
-  assert.equal(ui.element('edit-feedback').dataset.state,'unconfirmed');
-  assert.equal(ui.element('edit-prompt').value,'新请求');
-});
-
-test('Opaque MCP App origins use wildcard delivery while replies remain source and origin bound', async () => {
-  const ui = await createUiHarness('panel');
-  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:true},'null');
-  const result = ui.state('sendPrompt({requestId:"opaque",message:"Change selected"})');
-  assert.equal(ui.hostMessages.at(-1).origin,'*');
-  ui.window.emit('message',{source:{},origin:'null',data:{type:'codex-canvas/prompt-result',requestId:'opaque',ok:true}});
-  assert.equal(ui.state('promptReplies.size'),1);
-  ui.host({type:'codex-canvas/prompt-result',requestId:'opaque',ok:true},'null'); await result;
+test('The panel rejects removed edit controls without dispatching them', async t => {
+  const controller = new CanvasController();
+  const panel = await controller.ensurePanel(); t.after(() => panel.close());
+  let dispatched = false;
+  controller.call = async () => { dispatched = true; };
+  for (const name of ['canvas_prepare_edit','canvas_edit_status']) {
+    const response = await fetch(panel.url+'/rpc',{method:'POST',body:JSON.stringify({name})});
+    assert.equal(response.status,403);
+  }
+  assert.equal(dispatched,false);
 });
 
 test('Fast selection polling cannot starve the recovery checkpoint timer', async () => {

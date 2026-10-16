@@ -1,16 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createUiHarness, settle } from './ui-harness.mjs';
+import { createUiHarness } from './ui-harness.mjs';
 
 const transition = '选区或页面正在切换，请确认选中的元素后重试。';
 const selected = (node = 'title', pageId = '0') => ({pageId,nodeIds:[node],count:1,nodes:[{id:node,name:node,type:'text'}]});
 async function panel() {
   const ui = await createUiHarness('panel');
-  ui.host({type:'codex-canvas/theme',colorScheme:'light',canSendPrompt:true});
+  ui.host({type:'codex-canvas/theme',colorScheme:'light'});
   ui.editor({type:'op-bridge/ready',generation:1,revision:0});
   ui.rpc(() => ({version:7,selection:selected()}));
   await ui.state('refreshCanvas()');
-  ui.element('edit-prompt').value = '改成蓝色'; ui.element('edit-prompt').oninput();
   return ui;
 }
 function flush(ui) {
@@ -25,15 +24,12 @@ test('Selection/page transition polling recovers automatically, including older 
     await ui.state('refreshCanvas()');
     assert.equal(ui.element('error').hidden,true);
     assert.equal(ui.element('selection-label').textContent,'正在同步选区…');
-    assert.equal(ui.element('edit-submit').disabled,true);
     assert.notEqual(ui.element('status').textContent,'画布连接中断');
     assert.equal(ui.hostMessages.at(-1).data.selection,null,'The host must not retain a stale target');
     ui.rpc(() => ({version:7,selection:selected('next-title','page-2')}));
     await ui.state('refreshCanvas()');
     assert.match(ui.element('selection-label').textContent,/next-title/);
     assert.equal(ui.element('error').hidden,true);
-    assert.equal(ui.element('edit-submit').disabled,false);
-    assert.equal(ui.element('edit-prompt').value,'改成蓝色');
     assert.ok(ui.rpcCalls.every(call => ['canvas_status'].includes(JSON.parse(call.options.body).name)));
   }
 });
@@ -49,7 +45,7 @@ test('Real connection failures remain visible and clear when the canvas reconnec
   await ui.state('refreshCanvas()');
   assert.equal(ui.element('error').hidden,true);
   assert.equal(ui.element('status').textContent,'画布已连接');
-  assert.equal(ui.element('edit-submit').disabled,false);
+  assert.match(ui.element('selection-label').textContent,/title/);
 });
 
 test('Successful selection polls cannot erase failed saves or sync conflict warnings', async () => {
@@ -72,23 +68,17 @@ test('Successful selection polls cannot erase failed saves or sync conflict warn
   assert.equal(ui.element('status').textContent,'同步冲突');
 });
 
-test('Changed selection submission preserves the draft and its warning clears after a valid read', async () => {
-  const ui = await panel(); let available = false;
-  ui.rpc(({name}) => {
-    if (name === 'canvas_prepare_edit') return {error:'选区已变化。请确认当前元素，再提交修改要求。',code:'SELECTION_CHANGED'};
-    if (!available) return {error:transition,code:'SELECTION_TRANSITION'};
-    return {structuredContent:{version:7,selection:selected('other')}};
-  },{raw:true});
-  const submitting = ui.state('submitSelectionPrompt()'); flush(ui); await submitting; await settle();
-  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
-  assert.equal(ui.element('error').hidden,false);
-  assert.match(ui.element('error-message').textContent,/选区已变化/);
-  assert.equal(ui.clipboard.length,0);
-  available = true; await ui.state('refreshSelection()');
+test('Deleted selection clears stale context and recovers when another element is selected', async () => {
+  const ui = await panel();
+  ui.rpc(() => ({error:'选中的元素已不存在，请重新选择。',code:'SELECTION_STALE'}),{raw:true});
+  await ui.state('refreshCanvas()');
+  assert.equal(ui.element('selection-label').textContent,'请重新选择元素');
+  assert.equal(ui.hostMessages.at(-1).data.selection,null);
   assert.equal(ui.element('error').hidden,true);
+  ui.rpc(() => ({version:7,selection:selected('other')}));
+  await ui.state('refreshCanvas()');
   assert.match(ui.element('selection-label').textContent,/other/);
-  assert.equal(ui.element('edit-submit').disabled,false);
-  assert.ok(!ui.rpcCalls.some(call => ['canvas_save','canvas_checkpoint'].includes(JSON.parse(call.options.body).name)));
+  assert.ok(ui.rpcCalls.every(call=>JSON.parse(call.options.body).name==='canvas_status'));
 });
 
 test('Dismissed persistent warnings stay closed across identical polls and reappear for a new failure', async () => {
