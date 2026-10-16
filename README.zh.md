@@ -234,6 +234,7 @@ npm test
 # 原生功能或运行环境变更还需执行相关独立验证：
 npm run smoke -- --binary /path/to/openpencil-desktop
 npm run canvas-smoke
+npm run codegen-smoke
 npm run selection-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
 npm run mobile-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
 # 保持独立画布开启，供交互验证：

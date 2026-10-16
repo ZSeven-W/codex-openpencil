@@ -234,6 +234,7 @@ npm test
 # Native/runtime changes also need the relevant isolated smoke checks:
 npm run smoke -- --binary /path/to/openpencil-desktop
 npm run canvas-smoke
+npm run codegen-smoke
 npm run selection-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
 npm run mobile-smoke -- --runtime /absolute/path/to/runtime --output /absolute/evidence-dir
 # Keep an isolated canvas open for interactive verification:

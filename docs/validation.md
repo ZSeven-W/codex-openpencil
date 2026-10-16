@@ -1,5 +1,67 @@
 # Validation
 
+## Code-panel handoff and source return — 2026-10-17
+
+v0.3.9 routes the existing embedded Code panel's explicit Generate action through
+its owning canvas controller. The captured framework, page, node IDs and document
+version remain fixed. The stable Rust runtime now exposes read-only deterministic
+`codegen_export` for its eight existing panel frameworks and CSS variables. This
+provides a baseline preview without configuring a second model provider.
+
+The MCP Apps wrapper sends one `ui/message` only when the host advertises text
+messages. An acknowledgement means accepted delivery, not completed code. Missing
+capability preserves the baseline and asks the user to say “继续转代码” in Codex.
+Timeouts and uncertain delivery are not replayed. The model-only status/completion
+tools check request identity, design version, cancellation, source extension,
+UTF-8 and the 2 MiB source limit. Completion returns the primary source to the
+existing preview/cache/copy/download path; other project files stay in the workspace.
+
+Package checks, all 74 plugin regressions and skill validation passed. Rust checks
+passed full workspace format/Clippy on the stable base, all 766 Web host tests,
+three deterministic-export tests, the read-only MCP wire test and focused bridge/UI
+regressions. Production WASM passed all seven bundle checks with zero `env.*`
+imports and a 5,320,374-byte gzip payload. The bridge was also mirrored to the
+v0.8.5 development branch, where both host-request tests passed; that checkout's
+full gate separately fails in pre-existing `op-orchestrator` callers of absent
+`op-design-lint` helpers. No unrelated working-tree changes were edited.
+
+Upstream native CI found an exact-count catalog assertion that needed to move
+from 135 to 136 after registering `codegen_export`. A test-only follow-up corrects
+that assertion and isolates the starter-document test from saved developer
+settings (`d92f32458`). All 1,251 host-services tests and the full workspace
+format/Clippy gate then passed locally. The production runtime remains built from
+`fd2fac91`; these follow-up changes affect tests only.
+The separate upstream dependency audit still fails on existing `rustls`/`ruzstd`
+advisories and a yanked `zip` version. This change adds one internal `op-codegen`
+dependency edge and changes no locked dependency versions; it does not establish
+a passing dependency audit.
+
+The newly built native/WASM runtime passed isolated HTML, React and Vue export,
+primary-source completion/readback and changed-design rejection. The full native
+bridge smoke also passed create/read/layout/lint/PNG/save/reopen with 184 tools;
+the managed canvas smoke passed edit/save/independent reopen on a freshly staged
+runtime. In the existing Chrome profile, actual pointer actions selected the board,
+opened the right Code
+tab, selected HTML and clicked Generate. The controller received the same captured
+board/framework/version, and a completed HTML source visibly replaced the baseline
+with “Codex 已回填 · 项目见对话”. A local runnable result was opened in Codex's existing
+in-app browser; clicking its button displayed “Your project is ready.” UI download
+verification was interrupted by concurrent browser interaction and is not claimed.
+The cloud-built macOS ARM archive was independently downloaded, checksum-verified
+and passed the same HTML/React/Vue source-return and stale-design smoke locally.
+Local evidence is retained under `artifacts/v0.3.9-codegen/`.
+
+The six Node.js 22/24 plugin CI jobs passed in
+[run 38925916437](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38925916437).
+The matching public runtime passed its Web job, all six native build/smoke jobs
+and publication in
+[run 38925966825](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38925966825).
+The plugin pins `runtime-v0.8.5-fd2fac9` with all six release-provided archive
+sizes and checksums; their sizes match the published assets.
+Live MCP Apps presentation and automatic chat delivery remain unverified; the
+host bridge tests simulate the capability/acknowledgement contract. No claim of
+automatic chat submission is made for the ordinary in-app browser.
+
 ## Embedded sidebar and live slide previews — 2026-10-16
 
 v0.3.8 passes an explicit `chat=host` capability to the embedded Rust editor.
