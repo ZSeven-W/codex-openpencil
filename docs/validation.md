@@ -58,6 +58,12 @@ and publication in
 [run 38925966825](https://github.com/ZSeven-W/codex-openpencil/actions/runs/38925966825).
 The plugin pins `runtime-v0.8.5-fd2fac9` with all six release-provided archive
 sizes and checksums; their sizes match the published assets.
+Normal setup then downloaded and verified that release into the current local
+profile, passed native edit/save/independent reopen, installed v0.3.9 and verified
+190 tools through the bundled Codex plugin loader, including
+`canvas_codegen_status` and `canvas_codegen_complete`. The installed plugin tree
+matches the repository package exactly. Existing running canvases need a plugin
+reconnect and reopen to load the new bridge/runtime.
 Live MCP Apps presentation and automatic chat delivery remain unverified; the
 host bridge tests simulate the capability/acknowledgement contract. No claim of
 automatic chat submission is made for the ordinary in-app browser.
