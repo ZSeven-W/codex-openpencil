@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <a href="#one-prompt-install-and-first-design">Quick Start</a> · <a href="#why-codex-openpencil">Features</a> · <a href="#design-examples">Examples</a> · <a href="./INSTALL.md">Install Guide</a> · <a href="./docs/validation.md">Validation</a>
+  <a href="#one-prompt-install-and-first-design">Quick Start</a> · <a href="#why-codex-openpencil">Features</a> · <a href="#design-examples">Examples</a> · <a href="#ecosystem">Ecosystem</a> · <a href="./INSTALL.md">Install Guide</a> · <a href="./docs/validation.md">Validation</a>
 </p>
 
 <br />
@@ -255,17 +255,22 @@ After plugin edits, reinstall with `codex plugin add openpencil@zseven-openpenci
 
 ## Ecosystem
 
-Codex OpenPencil is the Codex integration for **[OpenPencil](https://github.com/ZSeven-W/openpencil)**, part of the **[ZSeven-W](https://github.com/ZSeven-W)** family of AI tools.
+Codex OpenPencil brings **[OpenPencil](https://github.com/ZSeven-W/openpencil)** into Codex. It belongs to the **[ZSeven-W](https://github.com/ZSeven-W)** ecosystem: `jian` supplies the editor UI, `agent-rs` runs OpenPencil's built-in agents, and companion tools add terminal workflows, memory, delegation and QA.
 
 | Project | What it does |
 | --- | --- |
 | **[OpenPencil](https://github.com/ZSeven-W/openpencil)** | The Rust vector design engine behind this plugin — editable documents, layouts, rendering, and native MCP tools. |
 | **[DSH OpenPencil](https://github.com/ZSeven-W/dsh-openpencil)** | The sibling DeepSeek Harness integration — exact previews, an interactive canvas, and a managed editor inside DSH. |
-| **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | Async Rust agent runtime with model providers, tool execution, permissions, and MCP. |
+| **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | Companion design guidance for agents using the `op` CLI and MCP tools. |
+| **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | Rust agent runtime powering OpenPencil's built-in agents, with model providers, tools, permissions and MCP. |
 | **[jian](https://github.com/ZSeven-W/jian)** | The GPU-Skia Rust UI framework used by OpenPencil. |
-| **[Zode](https://github.com/ZSeven-W/zode)** | An open-source AI coding assistant for the terminal. |
-| **[noema](https://github.com/ZSeven-W/noema)** | Local-first agent memory stored as inspectable files. |
-| **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | A companion skill that teaches agents to design with the `op` CLI. |
+| **[Zode](https://github.com/ZSeven-W/zode)** | AI coding assistant for the terminal that can drive OpenPencil through MCP. |
+| **[noema](https://github.com/ZSeven-W/noema)** | Local-first agent memory with inspectable files, review queues, lexical recall and MCP. |
+| **[DSH Crew](https://github.com/ZSeven-W/dsh-crew)** | Dispatch work from Codex or Claude Code to DeepSeek Harness agents, with native progress reporting. |
+| **[Craft Skills](https://github.com/ZSeven-W/craft-skills)** | Research- and evaluation-driven agent skills for image workflows, visual design and asset verification. |
+| **[DSH QA](https://github.com/ZSeven-W/dsh-qa)** | Evidence-based app exploration and replayable QA scenarios across browser, desktop, iOS and Android drivers. |
+
+For the standalone OpenPencil editor, see the **[Homebrew tap](https://github.com/ZSeven-W/homebrew-openpencil)** for macOS and **[Scoop bucket](https://github.com/ZSeven-W/scoop-openpencil)** for Windows. This Codex plugin installs its matching editor runtime through its own setup flow.
 
 ## Contributing
 
