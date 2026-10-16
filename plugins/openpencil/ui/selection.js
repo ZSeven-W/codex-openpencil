@@ -1,4 +1,5 @@
 let selection = null, submittingPrompt = false, canSendPrompt = false, refreshingSelection = false;
+let shortcutOpen = false, activeEdit = null;
 const promptReplies = new Map();
 const promptInput = el('edit-prompt'), promptSubmit = el('edit-submit');
 
@@ -14,12 +15,36 @@ function selectionReadFailed(error) {
 function renderSelection(value) {
   selection = value?.count > 0 && Array.isArray(value.nodeIds) && value.count === value.nodeIds.length ? value : null;
   const names = selection?.nodes?.map(node => node.name || node.id).join('、') || '';
-  el('selection-label').textContent = selection ? `已选 ${selection.count} 个元素 · ${names}` : '在画布中选中元素，用提示词修改';
+  el('selection-label').textContent = selection ? `已选 ${selection.count} 个元素 · ${names}` : '先在画布中选中要修改的元素';
   el('selection-label').title = names;
-  promptInput.disabled = !ready || submittingPrompt;
-  promptSubmit.disabled = !ready || !selection || !promptInput.value.trim() || submittingPrompt;
-  promptSubmit.textContent = submittingPrompt ? '正在提交…' : canSendPrompt ? '发送给 Codex' : '复制修改请求';
-  el('edit-hint').textContent = canSendPrompt ? '仅修改选中的元素及其子节点 · ⌘ / Ctrl + Enter 提交' : '也可直接在 Codex 聊天中说“修改选中元素”；或复制含元素位置的请求';
+  el('selection-guide').textContent = selection ? '在当前 Codex 聊天描述修改，例如：“把选中的卡片改成深色”。' : '选中后，在当前 Codex 聊天描述你的修改要求。';
+  el('edit-toggle').hidden = !canSendPrompt;
+  el('edit-toggle').textContent = shortcutOpen ? '收起快捷输入' : '在画布内提要求';
+  el('edit-toggle').ariaExpanded = String(canSendPrompt && shortcutOpen);
+  el('edit-shortcut').hidden = !canSendPrompt || !shortcutOpen;
+  promptInput.disabled = !canSendPrompt || !ready || submittingPrompt;
+  promptSubmit.disabled = !canSendPrompt || !ready || !selection || !promptInput.value.trim() || submittingPrompt;
+  promptSubmit.textContent = submittingPrompt ? '正在提交…' : '修改选中内容';
+}
+
+function editFeedback(text, state = '') {
+  el('edit-feedback').textContent = text;
+  el('edit-feedback').dataset.state = state;
+}
+function renderEditProgress(value) {
+  if (!activeEdit || value?.requestId !== activeEdit.requestId) return;
+  activeEdit.progress = value;
+  if (submittingPrompt) return;
+  const labels = { working:'正在修改…', completed:'已完成 · 已检查预览并保存', failed:'修改未完成，请在 Codex 聊天查看原因' };
+  if (labels[value.status]) {
+    clearError('prompt');
+    if (value.status === 'failed' && !activeEdit.draftRestored) {
+      activeEdit.draftRestored = true;
+      if (!promptInput.value) { promptInput.value = activeEdit.prompt; renderSelection(selection); }
+    }
+    editFeedback(labels[value.status], value.status);
+    el('edit-feedback').title = value.detail || '';
+  }
 }
 
 async function refreshSelection() {
@@ -41,40 +66,29 @@ function sendPrompt(prepared) {
   });
 }
 
-async function copyRequest(message) {
-  try {
-    if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-    await navigator.clipboard.writeText(message);
-    el('edit-feedback').textContent = '修改请求已复制，请粘贴到当前 Codex 聊天发送。';
-  } catch {
-    el('request-text').value = message;
-    el('request-dialog').showModal();
-    el('request-text').focus(); el('request-text').select();
-    el('edit-feedback').textContent = '请在弹窗中复制请求，再粘贴到 Codex 聊天。';
-  }
-}
-
 async function submitSelectionPrompt() {
   const prompt = promptInput.value.trim();
-  if (!ready || !selection || !prompt || submittingPrompt) return;
+  if (!canSendPrompt || !ready || !selection || !prompt || submittingPrompt) return;
   // Capture the visible target before any asynchronous snapshot/transport work.
   const expectedSelection = { pageId:selection.pageId, nodeIds:[...selection.nodeIds] };
-  const direct = canSendPrompt;
-  submittingPrompt = true; renderSelection(selection); clearError('prompt'); clearError('selection'); el('edit-feedback').textContent = '';
+  activeEdit = null;
+  submittingPrompt = true; renderSelection(selection); clearError('prompt'); clearError('selection'); editFeedback('正在提交…', 'submitting');
+  el('edit-feedback').title = '';
   try {
     const snapshot = await flush();
+    if (!canSendPrompt) throw new Error('快捷发送已不可用。请在当前 Codex 聊天描述修改；提示词已保留。');
     const prepared = await rpc('canvas_prepare_edit', { prompt, expectedSelection, docJson:snapshot.docJson });
-    if (direct) {
-      await sendPrompt(prepared);
-      if (promptInput.value.trim() === prompt) promptInput.value = '';
-      el('edit-feedback').textContent = '修改要求已发送给 Codex，结果将在画布中同步。';
-    } else await copyRequest(prepared.message);
+    if (!canSendPrompt) throw new Error('快捷发送已不可用。请在当前 Codex 聊天描述修改；提示词已保留。');
+    activeEdit = { requestId:prepared.requestId, prompt };
+    await sendPrompt(prepared);
+    if (promptInput.value.trim() === prompt) promptInput.value = '';
+    editFeedback('已提交 · 等待 Codex 处理', 'submitted');
   } catch (error) {
     if (isSelectionReadError(error)) {
-      fail(error, 'selection'); el('edit-feedback').textContent = '选区已更新，请确认当前元素后重新提交；提示词已保留。';
-    } else { fail(error, 'prompt'); el('edit-feedback').textContent = '请求未确认，提示词已保留。'; }
+      fail(error, 'selection'); editFeedback('请确认当前选区后重新提交；提示词已保留。', 'failed');
+    } else { fail(error, 'prompt'); editFeedback('请求未确认，请先检查 Codex 聊天；提示词已保留。', 'unconfirmed'); }
   }
-  finally { submittingPrompt = false; renderSelection(selection); void refreshSelection(); }
+  finally { submittingPrompt = false; renderSelection(selection); renderEditProgress(activeEdit?.progress); void refreshSelection(); }
 }
 
 window.addEventListener('message', event => {
@@ -89,11 +103,14 @@ window.addEventListener('message', event => {
   }
 });
 promptInput.oninput = () => renderSelection(selection);
+el('edit-toggle').onclick = () => {
+  if (!canSendPrompt) return;
+  shortcutOpen = !shortcutOpen; renderSelection(selection);
+  if (shortcutOpen) promptInput.focus();
+};
 el('edit-form').onsubmit = event => { event.preventDefault(); void submitSelectionPrompt(); };
 promptInput.addEventListener('keydown', event => {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !event.isComposing) { event.preventDefault(); void submitSelectionPrompt(); }
 });
-el('request-close').onclick = () => el('request-dialog').close();
-el('request-copy').onclick = () => void copyRequest(el('request-text').value);
 window.addEventListener('focus', () => void refreshSelection());
 renderSelection(null);

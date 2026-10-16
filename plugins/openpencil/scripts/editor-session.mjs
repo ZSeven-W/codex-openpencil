@@ -155,7 +155,8 @@ export class EditorSession {
     const hash = await atomicSave(filePath, bytes, filePath === this.source ? this.baseline : null);
     this.source = filePath; this.baseline = hash;
     await this.checkpoint();
-    return { filePath, sha256: hash, version: value.version };
+    this.lastSave = { filePath, sha256: hash, version: value.version };
+    return this.lastSave;
   }
 
   async close() {

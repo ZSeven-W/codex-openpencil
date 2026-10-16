@@ -1,3 +1,36 @@
+# Chat-first selection edits — 2026-10-16
+
+v0.3.1 makes the current Codex chat the default edit input. The standalone panel
+shows the current selection and a chat guide, with no prompt form or copy dialog.
+A host advertising `message.text` exposes an optional collapsed shortcut. Its
+action is “修改选中内容”. Drafts survive failed sends, capability revocation and
+selection changes; uncertain deliveries direct users to check chat before retrying.
+
+Submitted is established by the host acknowledgement. Working and completed
+require a matching agent progress report. The model-only control rejects unknown
+or finished requests and refuses completion without a document change and a
+guarded save of the current version. The design workflow also requires inspecting
+the screenshot and verifying the saved design before reporting completion. The
+panel cannot report its own completion, and unrelated changes cannot establish it.
+
+Package checks and all 67 Node tests passed locally. The isolated published macOS
+ARM64 runtime passed selected-subtree edits, a later selection change without
+retargeting, nested and multiple selections, empty/stale rejection, progress/save
+guards, native PNG capture, guarded save and reopen. Native PNGs were inspected:
+the selected card became navy with white text while its sibling stayed unchanged.
+Local report: `artifacts/selection-chat-first/run-p0Aglt/report.json`.
+
+In the existing Chrome profile, an isolated panel visibly showed the compact chat
+guide without the old copy button. A real pointer click selected `Accent`; both
+the panel label and `canvas_selection` resolved `canvas-card`. A native edit to
+that exact node, guarded save, saved readback and independent reopen passed.
+Local report: `artifacts/canvas-24dHYC/browser-report.json`. Browser screenshots
+were inspected for the default layout and selection guide. Browser extension
+automation subsequently timed out, so no live host shortcut/delivery result is
+claimed. Embedded Codex presentation and actual `ui/message` follow-up delivery
+remain unverified; the 67 tests exercise those protocol boundaries with a
+deterministic harness.
+
 # One-prompt installation — 2026-10-16
 
 The repository is public. v0.3.0 adds a complete runtime installer, an agent-facing

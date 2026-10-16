@@ -3,8 +3,9 @@ import { EditorSession } from './editor-session.mjs';
 import { startPanel } from './canvas-panel.mjs';
 import { forward, errorReply } from './transport.mjs';
 import { readCanvasSelection, prepareSelectionEdit } from './canvas-selection.mjs';
+import { SelectionEdits } from './selection-edits.mjs';
 
-export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.html';
+export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.1.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
 const filePath = { type: 'string', description: 'Absolute .op path; omit to create or reopen this session’s canvas.' };
 export const canvasTools = [
@@ -20,6 +21,10 @@ export const canvasTools = [
       expectedSelection: { type: 'object', properties: { pageId: { type: 'string' }, nodeIds: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['pageId', 'nodeIds'], additionalProperties: false },
       docJson: { type: 'string', description: 'UI-only flushed document snapshot.' } }),
     annotations: { readOnlyHint: true, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
+  { name: 'canvas_edit_status', description: 'Report progress for a captured selection edit request. Report working before editing. Report completed only after inspecting the affected screenshot and saving the current document with canvas_save; provide a verification summary. Report failed when stopped. This updates progress only and never edits or retries the design.',
+    inputSchema: { ...schema({ requestId: { type: 'string', minLength: 1, maxLength: 80 },
+      status: { type: 'string', enum: ['working', 'completed', 'failed'] }, detail: { type: 'string', minLength: 1, maxLength: 500 } }), required: ['requestId', 'status', 'detail'] },
+    annotations: { destructiveHint: false, openWorldHint: false }, _meta: { ui: { visibility: ['model'] } } },
   { name: 'canvas_save', description: 'Save the managed canvas to its original path or a new absolute .op path. Refuses external changes or an existing Save As destination. UI must flush its snapshot first; never automatically retry.',
     inputSchema: schema({ filePath, docJson: { type: 'string', description: 'UI-only flushed document snapshot, used to reject stale saves.' } }),
     annotations: { destructiveHint: true, openWorldHint: false } },
@@ -30,7 +35,7 @@ export const canvasTools = [
 const toolResult = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], structuredContent: value });
 
 export class CanvasController {
-  constructor(options = {}) { this.options = options; this.queue = Promise.resolve(); this.session = null; this.panel = null; }
+  constructor(options = {}) { this.options = options; this.queue = Promise.resolve(); this.session = null; this.panel = null; this.edits = new SelectionEdits(); }
   enqueue(work) { const result = this.queue.then(work); this.queue = result.catch(() => {}); return result; }
   async ensurePanel() { if (!this.panel) this.panel = await startPanel(this); return this.panel; }
   async open({ filePath } = {}) {
@@ -52,9 +57,14 @@ export class CanvasController {
     if (!this.session) throw new Error('Open a managed canvas with open_canvas first.');
     if (name === 'canvas_save') return toolResult(await this.session.save(args));
     if (name === 'canvas_checkpoint') return toolResult(await this.session.checkpoint());
+    if (name === 'canvas_edit_status') return toolResult(await this.edits.report(args, this.session));
     const current = await readCanvasSelection(this.session, { fresh: name === 'canvas_prepare_edit' });
-    if (name === 'canvas_prepare_edit') return toolResult(prepareSelectionEdit(args, current, this.session));
-    return toolResult({ filePath: this.session.source, recoveryPath: this.session.draft, version: current.live.version, selection: current.selection });
+    if (name === 'canvas_prepare_edit') {
+      const prepared = prepareSelectionEdit(args, current, this.session);
+      this.edits.prepare(prepared);
+      return toolResult(prepared);
+    }
+    return toolResult({ filePath: this.session.source, recoveryPath: this.session.draft, version: current.live.version, selection: current.selection, editRequest: this.edits.current() });
   }
   async resource() {
     const panel = await this.ensurePanel();
@@ -82,7 +92,7 @@ export class CanvasController {
       const upstream = this.session ? await this.session.forward(message) : await forward(message, this.options);
       if (!Object.hasOwn(message, 'id')) return null;
       if (message.method === 'initialize') {
-        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.0' } };
+        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.1' } };
         result.capabilities = { ...result.capabilities, tools: { listChanged: true }, resources: {} };
         return reply(result);
       }

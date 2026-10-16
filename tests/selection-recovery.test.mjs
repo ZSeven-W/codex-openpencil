@@ -6,6 +6,7 @@ const transition = '选区或页面正在切换，请确认选中的元素后重
 const selected = (node = 'title', pageId = '0') => ({pageId,nodeIds:[node],count:1,nodes:[{id:node,name:node,type:'text'}]});
 async function panel() {
   const ui = await createUiHarness('panel');
+  ui.host({type:'codex-canvas/theme',colorScheme:'light',canSendPrompt:true});
   ui.editor({type:'op-bridge/ready',generation:1,revision:0});
   ui.rpc(() => ({version:7,selection:selected()}));
   await ui.state('refreshCanvas()');

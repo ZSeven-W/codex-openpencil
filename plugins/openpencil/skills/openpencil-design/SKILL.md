@@ -52,9 +52,17 @@ explain instead of choosing another target. Preserve unrelated nodes and reuse
 existing IDs where possible. Preview the affected roots after the edit, and
 distinguish a submitted prompt from an applied and visually checked result.
 
-The prompt bar sends a follow-up only when the host advertises message support.
-In a standalone browser it copies a request for the user to paste into the current
-Codex conversation. Never claim a copied request has already modified the design.
+The default workflow uses the current Codex chat: select in the canvas, then
+describe the edit in chat. Do not ask the user to copy internal selection IDs or
+requests. Read `canvas_selection` yourself when starting that chat edit.
+An optional canvas shortcut appears only when the host advertises message support;
+it starts collapsed and submits a captured request. For these requests, call
+`canvas_edit_status` with the captured `requestId` and `working` before editing.
+After actually viewing the affected screenshot, saving with `canvas_save`, and
+verifying the saved design, report `completed` with a brief verification summary.
+Report `failed` with the reason when stopping. Failed or uncertain writes must
+never be retried automatically. A host delivery acknowledgement proves submission
+only; neither a changed document version nor selection polling proves completion.
 
 - Create fresh UI trees using `batch_design.script`: sandboxed JavaScript with
   `I(parent, node)` and `K(kitRef, parent, overrides)`, helpers, arrays, and loops.

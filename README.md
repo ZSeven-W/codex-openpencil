@@ -134,7 +134,9 @@ Select a card or heading on the canvas, then tell Codex:
 
 > Make the selected card dark green and enlarge its heading. Keep the other elements unchanged.
 
-`canvas_selection` resolves the active page and selected node IDs. The workflow confines edits to those subtrees. The panel's prompt bar can send the request through a compatible MCP Apps host; a standalone browser offers **Copy modification request** for pasting into the current chat. Empty or stale selections stop submission, and failed sends preserve your prompt.
+Select elements in the canvas, then describe your edit in the current Codex chat. Codex reads `canvas_selection` to resolve the active page and node IDs, and confines edits to those subtrees. No copying requests or element IDs is needed.
+
+Hosts that advertise direct message support also offer a collapsed **Describe an edit here** shortcut, with a **Modify selection** action. Its request captures the selection at submission time. Submitted, working, and completed are distinct states: Codex reports completion only after inspecting the preview and saving the current design. Empty or stale selections block submission, and failed sends preserve your draft.
 
 ### 3. Preview, save, and reopen
 
@@ -200,7 +202,7 @@ Canvas controls remain discoverable with the desktop editor offline. Reconnect a
 
 MCP Apps use the initial host theme and live theme notifications. Standalone panels use `prefers-color-scheme`; Codex's in-app browser supplies its resolved app theme.
 
-Native resource loading, browser interaction, embedded Codex UI presentation, and automatic `ui/message` follow-up delivery are separate checks. Live embedded presentation and automatic follow-up delivery remain unverified; standalone panels use copy/paste. See [evidence and remaining checks](./docs/validation.md).
+Native resource loading, browser interaction, embedded Codex UI presentation, and automatic `ui/message` follow-up delivery are separate checks. Live embedded presentation and automatic follow-up delivery remain unverified; standalone panels use the current Codex chat for edit instructions. See [evidence and remaining checks](./docs/validation.md).
 
 This plugin is distributed through the public GitHub repository and releases. It has not been submitted to OpenAI's public Plugin Directory.
 

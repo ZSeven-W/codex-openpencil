@@ -116,7 +116,7 @@ test('Only the trusted frame can send a prompt, and the host must acknowledge de
   assert.equal(app.hostMessages.filter(item=>item.data.method==='ui/message').length,2);
 });
 
-test('Unsupported hosts report copy fallback and context updates are deduplicated and cleared', async () => {
+test('Unsupported hosts reject shortcut sends and context updates are deduplicated and cleared', async () => {
   const app = await createUiHarness('app'); await initializeApp(app,'light'); const url = await openPanel(app);
   panelMessage(app,url,{type:'codex-canvas/ready'});
   assert.equal(app.frameMessages.at(-1).data.canSendPrompt,false);
@@ -146,23 +146,44 @@ async function flushPanel(ui) {
   await settle();
 }
 
-test('Standalone prompt copies the captured selection after flush, preserves draft and handles clipboard denial', async () => {
+test('Standalone canvas guides users to the current chat and cannot submit a second prompt', async () => {
   const ui = await readyPanel();
-  assert.equal(ui.element('edit-submit').textContent,'复制修改请求');
-  const submitted = ui.state('submitSelectionPrompt()');
-  ui.state('renderSelection({pageId:"0",nodeIds:["other"],count:1,nodes:[]})');
-  await flushPanel(ui); await submitted;
-  assert.equal(JSON.parse(ui.clipboard[0]).expectedSelection.nodeIds[0],'title');
+  assert.match(ui.element('selection-guide').textContent,/当前 Codex 聊天/);
+  assert.equal(ui.element('edit-toggle').hidden,true);
+  assert.equal(ui.element('edit-shortcut').hidden,true);
+  assert.equal(ui.element('edit-submit').disabled,true);
+  await ui.state('submitSelectionPrompt()');
+  assert.equal(ui.editorMessages.filter(item=>item.type==='op-bridge/snapshot').length,0);
   assert.equal(ui.element('edit-prompt').value,'改成蓝色');
+  assert.equal(ui.clipboard.length,0);
   assert.ok(!ui.hostMessages.some(item=>item.data.type==='codex-canvas/prompt'));
-  ui.navigator.clipboard.writeText = async () => {throw new Error('Denied');};
-  await ui.state('copyRequest("manual request")');
-  assert.equal(ui.element('request-dialog').open,true); assert.equal(ui.element('request-text').value,'manual request');
+  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:true});
+  assert.equal(ui.element('edit-toggle').hidden,true,'Standalone window messages cannot advertise host capabilities');
+});
+
+test('Only a capable host exposes the optional shortcut and revocation preserves its draft', async () => {
+  const ui = await readyPanel(true);
+  assert.equal(ui.element('edit-toggle').hidden,false);
+  assert.equal(ui.element('edit-shortcut').hidden,true,'Chat is the default input even in capable hosts');
+  ui.element('edit-toggle').onclick();
+  assert.equal(ui.element('edit-shortcut').hidden,false);
+  assert.equal(ui.element('edit-toggle').ariaExpanded,'true');
+  assert.equal(ui.element('edit-submit').textContent,'修改选中内容');
+  const submitted = ui.state('submitSelectionPrompt()');
+  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:false});
+  await flushPanel(ui); await submitted;
+  assert.equal(ui.element('edit-shortcut').hidden,true);
+  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
+  assert.ok(!ui.rpcCalls.some(call=>JSON.parse(call.options.body).name==='canvas_prepare_edit'));
+  assert.ok(!ui.hostMessages.some(item=>item.data.type==='codex-canvas/prompt'));
 });
 
 test('Direct prompt preserves text on rejection/timeout and clears it only after a trusted acknowledgement', async () => {
   const ui = await readyPanel(true);
-  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
+  const submitted = ui.state('submitSelectionPrompt()');
+  ui.state('renderSelection({pageId:"0",nodeIds:["other"],count:1,nodes:[]})');
+  await flushPanel(ui);
+  assert.equal(JSON.parse(ui.hostMessages.find(item=>item.data.type==='codex-canvas/prompt').data.message).expectedSelection.nodeIds[0],'title');
   const sent = ui.hostMessages.find(item=>item.data.type==='codex-canvas/prompt').data;
   ui.host({type:'codex-canvas/prompt-result',requestId:sent.requestId,ok:true},'https://foreign.example');
   assert.equal(ui.element('edit-prompt').value,'改成蓝色');
@@ -171,6 +192,8 @@ test('Direct prompt preserves text on rejection/timeout and clears it only after
   const retry = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
   ui.host({type:'codex-canvas/prompt-result',requestId:sent.requestId,ok:true}); await retry;
   assert.equal(ui.element('edit-prompt').value,'');
+  assert.equal(ui.element('edit-feedback').dataset.state,'submitted');
+  assert.doesNotMatch(ui.element('edit-feedback').textContent,/已完成|正在修改/);
   ui.element('edit-prompt').value = 'Other edit';
   const timeout = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
   const timer = [...ui.timers].find(([,fn])=>String(fn).includes('发送状态未确认'));
@@ -180,12 +203,54 @@ test('Direct prompt preserves text on rejection/timeout and clears it only after
 });
 
 test('Empty and failed selections disable submission without dropping the prompt', async () => {
-  const ui = await readyPanel();
+  const ui = await readyPanel(true);
   ui.state('renderSelection({count:0,nodeIds:[],nodes:[]})');
   assert.equal(ui.element('edit-submit').disabled,true);
   await ui.state('submitSelectionPrompt()'); assert.equal(ui.editorMessages.filter(item=>item.type==='op-bridge/snapshot').length,0);
   ui.rpc(()=>{throw new Error('Offline');}); await ui.state('refreshSelection()');
   assert.equal(ui.element('edit-submit').disabled,true); assert.equal(ui.element('edit-prompt').value,'改成蓝色');
+});
+
+test('Matching agent reports establish progress; unrelated edits and delivery acknowledgements do not', async () => {
+  const ui = await readyPanel(true);
+  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
+  ui.host({type:'codex-canvas/prompt-result',requestId:'prepared-1',ok:true}); await submitted;
+  ui.rpc(()=>({version:99,selection:selection(['other']),editRequest:{requestId:'unrelated',status:'completed'}}));
+  await ui.state('refreshCanvas()');
+  assert.equal(ui.element('edit-feedback').dataset.state,'submitted');
+  for (const status of ['working','completed']) {
+    ui.rpc(()=>({version:99,selection:selection(['other']),editRequest:{requestId:'prepared-1',status,detail:'Checked screenshot and saved'}}));
+    await ui.state('refreshCanvas()');
+    assert.equal(ui.element('edit-feedback').dataset.state,status);
+  }
+  assert.match(ui.element('edit-feedback').textContent,/已完成/);
+});
+
+test('Failed edit reports restore the submitted prompt without replacing a new draft', async () => {
+  const ui = await readyPanel(true);
+  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
+  ui.host({type:'codex-canvas/prompt-result',requestId:'prepared-1',ok:true}); await submitted;
+  ui.state('renderEditProgress({requestId:"prepared-1",status:"failed",detail:"Stopped"})');
+  assert.equal(ui.element('edit-prompt').value,'改成蓝色');
+  ui.element('edit-prompt').value='';
+  ui.state('renderEditProgress({requestId:"prepared-1",status:"failed",detail:"Stopped"})');
+  assert.equal(ui.element('edit-prompt').value,'','Repeated status polls must allow clearing the restored draft');
+  ui.element('edit-prompt').value='新的修改';
+  ui.state('renderEditProgress({requestId:"prepared-1",status:"failed",detail:"Stopped"})');
+  assert.equal(ui.element('edit-prompt').value,'新的修改');
+});
+
+test('An earlier completed request cannot replace the warning for a new failed submission', async () => {
+  const ui = await readyPanel(true);
+  const submitted = ui.state('submitSelectionPrompt()'); await flushPanel(ui);
+  ui.host({type:'codex-canvas/prompt-result',requestId:'prepared-1',ok:true}); await submitted;
+  ui.state('renderEditProgress({requestId:"prepared-1",status:"completed"})');
+  ui.element('edit-prompt').value='新请求';
+  const next = ui.state('submitSelectionPrompt()');
+  ui.host({type:'codex-canvas/theme',colorScheme:'dark',canSendPrompt:false});
+  await flushPanel(ui); await next;
+  assert.equal(ui.element('edit-feedback').dataset.state,'unconfirmed');
+  assert.equal(ui.element('edit-prompt').value,'新请求');
 });
 
 test('Opaque MCP App origins use wildcard delivery while replies remain source and origin bound', async () => {

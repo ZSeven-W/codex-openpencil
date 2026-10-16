@@ -61,7 +61,8 @@ export function prepareSelectionEdit({ prompt, expectedSelection, docJson }, cur
     pageId: current.selection.pageId, nodeIds: current.selection.nodeIds };
   const message = ['请根据以下要求修改 OpenPencil 中指定的元素。',
     '范围已在提交时固定：仅修改这些元素及其子节点，保留其他元素。即使后续选区改变，也不要更换目标。',
-    '先读取指定页面和元素；若文档、页面或元素不存在，停止并说明。完成后检查截图。不要自动重试超时的写入。',
+    '先用 canvas_edit_status 报告 working，再读取指定页面和元素；若文档、页面或元素不存在，停止并报告 failed。不要自动重试超时的写入。',
+    '完成修改后实际查看受影响区域的截图，调用 canvas_save 并验证保存，再用 canvas_edit_status 报告 completed 和检查结果。发送回执不代表修改完成。',
     'OpenPencil selection edit scope:', JSON.stringify(scope), '', '用户修改要求：', prompt.trim()].join('\n');
   return { requestId, ...scope, selection: current.selection, prompt: prompt.trim(), message };
 }

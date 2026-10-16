@@ -53,6 +53,8 @@ try {
   assert.deepEqual(selected.selection.nodeIds,['card-a']);
   const request = (await tool(controller,'canvas_prepare_edit',{prompt:'把选中的卡片改成深蓝底白字，标题改成 Deep focus。保留旁边的卡片。',expectedSelection:{pageId:'0',nodeIds:['card-a']}})).structuredContent;
   await writeFile(join(output,'prepared-request.json'),JSON.stringify(request,null,2));
+  await tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'working',detail:'Inspecting captured selection in the isolated native fixture.'});
+  await assert.rejects(tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'completed',detail:'Premature completion must fail.'}),/No document change/);
   // Simulate a later user selection change. The submitted prompt retains card-a.
   await select(controller,['card-b']);
   const captured = JSON.parse(request.message.split('OpenPencil selection edit scope:\n')[1].split('\n')[0]);
@@ -64,6 +66,12 @@ try {
   let value = (await controller.session.document()).document;
   assert.equal(find(value,'title-a').content,'Deep focus');
   assert.deepEqual(find(value,'card-b'),otherBefore);
+  await capture(controller,'selected-edit.png');
+  await assert.rejects(tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'completed',detail:'Unsaved completion must fail.'}),/Save the current/);
+  await tool(controller,'canvas_save',{filePath});
+  await tool(controller,'canvas_edit_status',{requestId:request.requestId,status:'completed',detail:'Smoke fixture: captured native screenshot, asserted selected subtree and untouched sibling, saved current version.'});
+  assert.equal((await tool(controller,'canvas_status')).structuredContent.editRequest.status,'completed');
+  report.cases.push({name:'request-progress-with-save-guards',passed:true});
   report.cases.push({name:'single-card-with-descendant',passed:true,untouchedSibling:true,retargetAfterSelectionChange:false});
   await select(controller,['title-a']);
   const nested = (await tool(controller,'canvas_selection')).structuredContent.selection;

@@ -12,9 +12,9 @@ MCP Apps resource -> capability-protected loopback panel -> full Rust WASM edito
 ```
 
 The Rust engine owns native design tools, layouts, rendering, undo and live sync.
-The plugin adds `open_canvas`, `canvas_status`, `canvas_save` and app-only
-`canvas_checkpoint`. The complete editable engine is reused rather than the
-public read-only web SDK. Native images and JSON-RPC errors pass through.
+The plugin adds `open_canvas`, `canvas_status`, `canvas_selection`, `canvas_edit_status`,
+`canvas_save` and app-only `canvas_prepare_edit` / `canvas_checkpoint`. It reuses
+the complete editable engine. Native images and JSON-RPC errors pass through.
 
 ## Process and document ownership
 
@@ -43,14 +43,25 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.2.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.1.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
-opaque 256-bit URL capability, Host and Origin, and accepts only three controls.
+opaque 256-bit URL capability, Host and Origin, and accepts only five panel controls.
 The iframe lifecycle token stays in private UI state, outside model-facing text.
 Editor messages require the exact frame source and origin. No global MCP config
 or anonymous browser is created.
+
+The default edit input is the current Codex chat. The panel displays selection
+and a chat guide. Only a host advertising `message.text` exposes the collapsed
+canvas shortcut; unsupported or standalone hosts never display a copy workflow.
+The shortcut flushes and freezes its file/page/node scope before `ui/message`.
+Delivery acknowledgements establish submission only. A bounded session registry
+tracks request IDs, and the model-only `canvas_edit_status` control reports
+working/completed/failed. The HTTP panel cannot report its own progress. Completion
+requires a changed document and a successful guarded save of the current version;
+the design skill additionally requires visual inspection and saved-file verification.
+Polling matches the exact request ID and never infers completion from other edits.
 
 The panel flushes the editor snapshot gate before Save. The controller compares
 that disk snapshot to the daemon's document, resolving only schema-owned image
