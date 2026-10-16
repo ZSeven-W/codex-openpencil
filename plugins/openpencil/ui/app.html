@@ -86,7 +86,7 @@ window.addEventListener('message', event => {
   if (message.method === 'ui/resource-teardown') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
 });
 (async()=>{
-  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.7'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
+  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.8'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
   hostCapabilities=initialized.hostCapabilities||{};
   // A notification received during initialization is newer than its response.
   if (!hostThemeChanged) acceptHostTheme(initialized.hostContext?.theme);

@@ -132,6 +132,8 @@ Codex OpenPencil 将 Codex 连接到本地 Rust [OpenPencil](https://github.com/
 
 `open_canvas` 启动独立的托管 Rust 编辑器。Codex 验证连接后，按内置 `openpencil-design` 工作流创建、检查、预览并保存设计。另一份文档使用另一个聊天；打开已有 `.op` 文件时，会先复制到当前独立会话。
 
+侧栏提供图层和幻灯片。幻灯片卡片显示画板的实时缩略图，点击即可定位到对应画板。对话留在 Codex，嵌入编辑器隐藏自身的 Agent tab。
+
 ### 2. 选中元素，用提示词修改
 
 在画布中选择卡片或标题，然后告诉 Codex：

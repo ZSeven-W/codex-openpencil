@@ -1,5 +1,33 @@
 # Validation
 
+## Embedded sidebar and live slide previews — 2026-10-16
+
+v0.3.8 passes an explicit `chat=host` capability to the embedded Rust editor.
+Only an embedded host can enable it; the hint is transient and leaves standalone
+Agent behavior and stored settings intact. A stale Agent selection falls back to
+Layers. The browser now paints visible slide thumbnails with the same scene
+renderer, images and fonts as its main canvas, using the matching board ID and
+aspect ratio. Edits, board removal and page switches use the current scene.
+
+The stable editor base passed all 764 Web host tests, 67 shared sidebar tests and
+66 plugin regressions. Production WASM bundle checks passed with zero `env.*`
+imports and a 5,319,155-byte gzip payload. Content regressions cover distinct
+portrait/landscape boards, text, deletion, clipping and page changes. The actual
+canvas was inspected in the existing Chrome profile: only Layers/Slides remained,
+both board previews included their content, and a card click framed its board.
+A matching native/WASM package built from clean stable revision
+`175844ede42a47268f753d331f0eeae32b010324` passed full workspace format/Clippy,
+managed canvas edit/save/independent-reopen, and the isolated native bridge smoke
+(create/read/layout/lint/PNG/save/reopen; 178 advertised tools). Its complete plugin
+panel was inspected in dark mode in the existing Chrome profile: Agent was hidden,
+portrait and landscape previews matched, and clicking the phone card centered it.
+The earlier light-mode inspection covered the same scene-rendering change.
+Local logs are retained in `artifacts/v0.3.8-sidebar/`.
+
+Public runtime workflow `38904587152` passed its Web job and all six native
+build/smoke jobs, then published `runtime-v0.8.5-175844e`. The plugin now pins the
+published source revision and all six release-provided archive sizes/checksums.
+
 ## Default Codex image generation — 2026-10-16
 
 v0.3.7 replaces v0.3.6's opt-in image policy: new raster assets use the host's

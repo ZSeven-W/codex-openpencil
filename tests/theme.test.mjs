@@ -42,6 +42,7 @@ test('Wrapper accepts host context and panel-ready only from their expected wind
 
 test('Host media preference drives top-level panel startup and live switching', async () => {
   const panel = await createUiHarness('panel', { dark: true, embedded: false });
+  assert.equal(new URL(panel.frame.src).searchParams.get('chat'), 'host');
   assert.equal(panel.theme(), 'dark');
   assert.equal(new URL(panel.frame.src).searchParams.get('theme'), 'dark');
   panel.frame.emit('load');

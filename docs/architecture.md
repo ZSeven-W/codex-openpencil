@@ -43,7 +43,7 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.7.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.8.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "openpencil",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Create, inspect, preview, and save editable OpenPencil designs with Codex.",
   "author": {
     "name": "ZSeven-W",

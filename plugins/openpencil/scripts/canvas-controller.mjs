@@ -5,7 +5,7 @@ import { forward, errorReply } from './transport.mjs';
 import { readCanvasSelection } from './canvas-selection.mjs';
 import { importCanvasImage } from './canvas-images.mjs';
 
-export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.7.html';
+export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.8.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
 const filePath = { type: 'string', description: 'Absolute .op path; omit to create or reopen this session’s canvas.' };
 export const canvasTools = [
@@ -83,7 +83,7 @@ export class CanvasController {
       const upstream = this.session ? await this.session.forward(message) : await forward(message, this.options);
       if (!Object.hasOwn(message, 'id')) return null;
       if (message.method === 'initialize') {
-        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.7' } };
+        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.8' } };
         result.capabilities = { ...result.capabilities, tools: { listChanged: true }, resources: {} };
         return reply(result);
       }

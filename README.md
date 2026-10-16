@@ -132,6 +132,8 @@ After installation and any required reconnect, ask:
 
 `open_canvas` starts a separate managed Rust editor. Codex verifies the connection and follows the bundled `openpencil-design` workflow to create, inspect, preview, and save the design. Use another chat for another document; opening an existing `.op` file copies it into the session.
 
+The sidebar offers Layers and Slides. Slide cards show live board previews; click a card to navigate to its board. Conversation stays in Codex, so the embedded editor hides its own Agent tab.
+
 ### 2. Select elements and describe a change
 
 Select a card or heading on the canvas, then tell Codex:

@@ -127,7 +127,7 @@ window.addEventListener('message', event => {
   if (value.type === 'op-shell/save') void save();
 });
 frame.addEventListener('load', initialize);
-frame.src = `${grant.editorOrigin}/?embed=vscode&locale=zh-CN&theme=${colorScheme}`;
+frame.src = `${grant.editorOrigin}/?embed=vscode&chat=host&locale=zh-CN&theme=${colorScheme}`;
 notifyParentReady();
 updateSource();
 const startup = setInterval(() => { if (ready) clearInterval(startup); else initialize(); }, 1000);
