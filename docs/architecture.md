@@ -43,7 +43,7 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.3.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.4.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
@@ -51,6 +51,12 @@ opaque 256-bit URL capability, Host and Origin, and accepts only five panel cont
 The iframe lifecycle token stays in private UI state, outside model-facing text.
 Editor messages require the exact frame source and origin. No global MCP config
 or anonymous browser is created.
+
+Plugin chrome mirrors `Theme::light()` and `Theme::dark()` in the pinned Rust
+runtime's `crates/op-editor-ui/src/theme.rs`: neutral surfaces and borders, blue
+interactive accents, and the editor's success/destructive colors. Review these
+values in `ui/panel.css` and the loading wrapper whenever the runtime catalog
+changes. The host theme selects the palette; design document colors are separate.
 
 The default edit input is the current Codex chat. The panel displays selection
 and a chat guide. Only a host advertising `message.text` exposes the collapsed

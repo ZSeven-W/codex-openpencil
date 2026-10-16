@@ -1,5 +1,27 @@
 # Validation
 
+## Editor theme alignment — 2026-10-16
+
+v0.3.4 replaces the plugin's warm gray/olive chrome with the actual light/dark
+palette from `crates/op-editor-ui/src/theme.rs` at the pinned runtime revision
+`40902a3fa595a78b6f97e9409875cef823b0e191`. The toolbar, selection strip, loading
+wrapper, buttons, inputs and dialogs now use the editor's neutral surfaces and
+blue accent. The collapsed selection strip retains its 32 px layout.
+
+In the existing Chrome profile, an isolated panel using the real Rust/WASM
+editor was inspected in dark mode, including Save As. An owned embedded fixture
+then verified light mode, the expanded optional input, its focus ring and a live
+host-theme switch back to dark. No user chat message was sent. A native edit
+made the fixture dirty, clicking Save restored its saved status, and a separate
+Rust session reopened the persisted change. These checks do not claim an update
+to an already-open Codex panel.
+
+Package validation and all 69 regression tests passed. Setup installed the local
+v0.3.4 cache and passed native edit/save/reopen plus the bundled Codex host check,
+exposing 186 tools including the canvas controls. Local logs and the owned host
+fixture are in `artifacts/v0.3.4-theme/`; the saved design is in
+`artifacts/canvas-QD4225/`.
+
 ## Compact selection strip — 2026-10-16
 
 v0.3.3 puts selection, chat guidance and the optional shortcut on one row.

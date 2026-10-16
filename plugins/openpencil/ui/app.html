@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-:root { color-scheme:light; --background:#f6f5f0; --text:#655d41; }
-:root[data-theme="dark"] { color-scheme:dark; --background:#20211e; --text:#c5c3b7; }
+:root { color-scheme:light; --background:#efefef; --text:#68686d; }
+:root[data-theme="dark"] { color-scheme:dark; --background:#121212; --text:#a3a3a3; }
 html,body { margin:0; height:100%; min-height:600px; background:var(--background); color:var(--text); font:14px sans-serif; }
 iframe { border:0; width:100%; height:100vh; min-height:600px; display:block; }
 #notice { padding:20px; }
@@ -106,7 +106,7 @@ window.addEventListener('message', event => {
   if (message.method === 'ui/resource-teardown') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
 });
 (async()=>{
-  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.3'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
+  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.4'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
   hostCapabilities=initialized.hostCapabilities||{};
   // A notification received during initialization is newer than its response.
   if (!hostThemeChanged) acceptHostTheme(initialized.hostContext?.theme);
