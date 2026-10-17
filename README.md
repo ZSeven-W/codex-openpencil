@@ -29,9 +29,9 @@
 <br />
 
 <p align="center">
-  <img src="./docs/images/fieldnotes-dashboard.png" alt="FIELDNOTES — an editable operations dashboard created with Codex OpenPencil" width="100%" />
+  <img src="./docs/images/codex-openpencil-banner.png" alt="Codex conversation alongside the OpenPencil canvas, showing the MŌDE fashion app home and product detail screens" width="100%" />
 </p>
-<p align="center"><sub>FIELDNOTES — a desktop dashboard rendered from an editable <code>.op</code> document, saved and reopened during design testing.</sub></p>
+<p align="center"><sub>Design in a Codex conversation, refine on an editable OpenPencil canvas — MŌDE fashion app home and product detail screens.</sub></p>
 
 ## One-prompt install and first design
 
@@ -161,6 +161,11 @@ The design workflow checks native layout and the rendered PNG, then reads the sa
 ## Design examples
 
 These single-page examples were created with native OpenPencil tools and visually inspected. The dashboard and landing page come from the three-case design test; the task app comes from the v0.3.0 first-use test. All were saved and reopened; these images are native renders of editable documents.
+
+<p align="center">
+  <img src="./docs/images/fieldnotes-dashboard.png" alt="FIELDNOTES — an editable operations dashboard created with Codex OpenPencil" width="100%" />
+</p>
+<p align="center"><sub>FIELDNOTES — a desktop dashboard rendered from an editable <code>.op</code> document, saved and reopened during design testing.</sub></p>
 
 <table>
 <tr>

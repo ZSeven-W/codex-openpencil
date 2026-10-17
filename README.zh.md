@@ -29,9 +29,9 @@
 <br />
 
 <p align="center">
-  <img src="./docs/images/fieldnotes-dashboard.png" alt="FIELDNOTES —— 用 Codex OpenPencil 创建的可编辑运营数据看板" width="100%" />
+  <img src="./docs/images/codex-openpencil-banner.png" alt="Codex 对话与 OpenPencil 画布同屏，展示 MŌDE 慕时服装 APP 的购物首页和商品详情页" width="100%" />
 </p>
-<p align="center"><sub>FIELDNOTES 桌面数据看板 —— 从可编辑 <code>.op</code> 文档原生渲染，已在设计实测中保存并重新打开。</sub></p>
+<p align="center"><sub>在 Codex 中对话设计，在 OpenPencil 画布中继续编辑 —— MŌDE 慕时服装 APP 首页与商品详情页。</sub></p>
 
 ## 一句话安装并开始设计
 
@@ -161,6 +161,11 @@ Codex OpenPencil 将 Codex 连接到本地 Rust [OpenPencil](https://github.com/
 ## 设计示例
 
 以下单页示例均通过原生 OpenPencil 工具创建并经过视觉检查。数据看板和品牌落地页来自三个案例的设计实测，手机任务页来自 v0.3.0 首次使用测试；均已保存并重新打开，展示图片是可编辑文档的原生渲染结果。
+
+<p align="center">
+  <img src="./docs/images/fieldnotes-dashboard.png" alt="FIELDNOTES —— 用 Codex OpenPencil 创建的可编辑运营数据看板" width="100%" />
+</p>
+<p align="center"><sub>FIELDNOTES 桌面数据看板 —— 从可编辑 <code>.op</code> 文档原生渲染，已在设计实测中保存并重新打开。</sub></p>
 
 <table>
 <tr>
