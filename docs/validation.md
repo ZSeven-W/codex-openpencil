@@ -1,5 +1,38 @@
 # Validation
 
+## Codex local-frame restriction and browser entrypoint — 2026-10-17
+
+The real Codex MCP Apps entrypoint opened, but its nested local canvas displayed
+Chromium's blocked-content page. Inspection of the running desktop host's bundled
+CSP normalization confirmed that HTTP frame origins, including loopback, are
+filtered from the effective allowlist. Declaring `frameDomains` on our resource
+therefore cannot enable this iframe in the current Codex host.
+
+v0.3.10 adds a model-callable `canvas_open_browser` tool without UI-entrypoint
+metadata. It opens the same isolated managed session and returns its panel URL.
+The MCP Apps wrapper shows a browser launcher instead of navigating an iframe
+when running under Codex's sandbox or when the effective host frame allowlist
+excludes the local origin. The launcher uses the advertised `ui/open-link`
+capability and reports rejected or uncertain delivery without claiming success.
+The normal browser canvas supports chat-driven selection edits and saves; Code
+Generate still requires saying “继续转代码” in chat in this mode.
+
+All 78 plugin regression tests and package checks passed. New coverage checks
+zero forbidden iframe navigations, theme propagation to the launcher URL,
+host-open rejection and foreign-URL rejection. The real native canvas smoke
+opened through `canvas_open_browser`, edited, saved and independently reopened
+the document. HTML/React/Vue native source-return and stale-design tests passed.
+The same live panel URL was opened in Codex's existing in-app browser and visibly
+rendered “画布已连接”; its blank document was left unchanged. This proves browser
+rendering, not updated launcher presentation or automatic MCP Apps chat handoff.
+
+Separately, the previous v0.3.9 public pin passed fresh installation on all six
+supported OS/architecture combinations with Node 22 and public Codex CLI 0.162.1
+in [run 39025882661](https://github.com/ZSeven-W/codex-openpencil/actions/runs/39025882661).
+Each job started from empty plugin/runtime state and exercised repeat setup.
+This terminal-based verification does not establish MCP Apps presentation.
+Local evidence is retained under ignored `artifacts/final-check-20261017/`.
+
 ## Publication rehearsal — 2026-10-17
 
 Three new independent documents were exercised through the installed v0.3.9

@@ -52,7 +52,12 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    success after a failed prerequisite, download, smoke test, plugin command or
    host check. This check opens no chat and does not edit a design. `OPENPENCIL_CODEX_BIN` can identify a
    non-PATH Codex executable. No runtime is downloaded during tool discovery.
-3. If `open_canvas` is available in the current chat, call it and verify
+3. Prefer `canvas_open_browser` in Codex, then show its `panelUrl` with
+   `open_in_codex` (browser target) or the user's existing browser. Codex currently
+   filters HTTP frame origins from its MCP Apps sandbox, including loopback;
+   do not embed this URL or ask users to weaken their security settings.
+   If only `open_canvas` is available in the current chat, call it and show its
+   returned `panelUrl` in the browser. Verify
    `canvas_status` plus `get_editor_state` before designing. Read the installed
    `openpencil-design` skill and its node schema before editing. If this chat has
    not loaded the new plugin yet, **open a canvas now** with the repository's

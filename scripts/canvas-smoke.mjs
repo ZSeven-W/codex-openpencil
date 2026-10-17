@@ -25,10 +25,11 @@ function request(method,params={}) {return new Promise((resolve,reject)=>{const 
 async function tool(name,args={}) {const result=await request('tools/call',{name,arguments:args});if(result.isError)throw new Error(result.content[0].text);return result;}
 try {
   await request('initialize',{protocolVersion:'2025-11-25',clientInfo:{name:'canvas-smoke',version:'1'},capabilities:{}});
-  const opened=await tool('open_canvas',{filePath});
+  const opened=await tool('canvas_open_browser',{filePath});
   const tools=await request('tools/list');
   assert.ok(tools.tools.some(t=>t.name==='batch_design'));
   assert.ok(tools.tools.some(t=>t.name==='open_canvas'));
+  assert.ok(tools.tools.some(t=>t.name==='canvas_open_browser'));
   const resource=await request('resources/read',{uri:CANVAS_URI});
   assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');
   assert.equal((await fetch(opened.structuredContent.panelUrl)).status,200);

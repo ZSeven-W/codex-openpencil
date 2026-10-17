@@ -43,11 +43,18 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.9.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.10.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
 opaque 256-bit URL capability, Host and Origin, and accepts only the declared panel controls.
+Codex currently removes HTTP origins from the sandbox's frame allowlist. In its
+`codex-sandbox:` surface, the wrapper therefore renders a browser launcher rather
+than navigating a blocked iframe. `canvas_open_browser` is a separate model-facing
+opener without UI-entrypoint metadata; it returns the same managed session and
+URL even when Codex hides `open_canvas` from model tool discovery. The installing
+agent opens that URL in the existing Codex browser panel. Other hosts can embed
+only when their effective frame policy permits the local origin.
 The iframe lifecycle token stays in private UI state, outside model-facing text.
 Editor messages require the exact frame source and origin. No global MCP config
 or anonymous browser is created.

@@ -12,8 +12,13 @@ payload manifest, version and platform before configuring or starting it.
 
 ## Interactive canvas
 
-1. For a requested conversation canvas, call `open_canvas`, optionally with the
-   user's existing absolute `.op` path. The source is copied into a recovery draft.
+1. In Codex, call `canvas_open_browser`, optionally with the user's existing
+   absolute `.op` path, then open its `panelUrl` in the Codex browser panel
+   (`open_in_codex`, browser target) or the user's existing browser. The source
+   is copied into a recovery draft. If only `open_canvas` is available, its
+   returned `panelUrl` works the same way. Codex currently filters local HTTP
+   iframe origins, so its MCP Apps entrypoint shows a browser launcher. Do not
+   request weaker browser security or claim an embedded canvas was verified.
 2. Missing runtime configuration triggers installation automatically. Allow the
    initial download to finish; do not repeatedly call `open_canvas` after a host
    timeout. For preflight or a slow connection, run

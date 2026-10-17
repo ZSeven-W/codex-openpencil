@@ -71,6 +71,8 @@ test('A managed canvas routes all tools to the same daemon and protects save_doc
   assert.equal(result.result.isError, true);
   assert.equal(calls.length,2);
   const opened = await call('open_canvas');
+  const browser = await call('canvas_open_browser');
+  assert.equal(browser.result.structuredContent.panelUrl, opened.result.structuredContent.panelUrl);
   assert.ok(!JSON.stringify(opened.result.structuredContent).includes('private-lifecycle-token'));
   assert.equal(opened.result._meta.canvas.token, 'private-lifecycle-token');
   assert.equal((await call('open_canvas',{filePath:'/different.op'})).result.isError, true);
@@ -83,6 +85,9 @@ test('UI resources and canvas tools remain available with the standalone editor 
   const open = list.result.tools.find(tool=>tool.name==='open_canvas');
   assert.equal(open._meta.ui.resourceUri,CANVAS_URI);
   assert.deepEqual(open._meta['openai/ui'].entrypoints,[{type:'thread'}]);
+  const browser = list.result.tools.find(tool => tool.name === 'canvas_open_browser');
+  assert.ok(browser, 'A model-callable opener must remain available independently of UI entrypoints');
+  assert.equal(browser._meta, undefined);
   const resource = await controller.dispatch({jsonrpc:'2.0',id:2,method:'resources/read',params:{uri:CANVAS_URI}});
   const item = resource.result.contents[0];
   assert.equal(item.mimeType,'text/html;profile=mcp-app');

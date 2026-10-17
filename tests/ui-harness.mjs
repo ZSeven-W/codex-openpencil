@@ -15,7 +15,7 @@ function events(target = {}) {
 
 // Execute the shipped inline scripts with deterministic DOM/event boundaries.
 // No browser, network, native editor, or user's document is involved.
-export async function createUiHarness(kind, { dark = false, embedded = true, hash = '', openaiTheme } = {}) {
+export async function createUiHarness(kind, { dark = false, embedded = true, hash = '', openaiTheme, protocol = 'http:' } = {}) {
   const hostMessages = [], editorMessages = [], frameMessages = [], navigation = [], rpcCalls = [], clipboard = [];
   let rpcHandler = () => ({}), rawRpc = false;
   const elements = new Map();
@@ -36,7 +36,7 @@ export async function createUiHarness(kind, { dark = false, embedded = true, has
   const media = events({ matches: dark });
   const root = { dataset: {}, style: { setProperty(key, value) { this[key] = value; } },
     setAttribute(key, value) { this[key] = value; } };
-  const window = events({ location: { hash, origin: 'http://127.0.0.1:4321', href: 'http://127.0.0.1:4321/canvas/test' + hash },
+  const window = events({ location: { hash, protocol, origin: 'http://127.0.0.1:4321', href: 'http://127.0.0.1:4321/canvas/test' + hash },
     matchMedia: () => media });
   const parent = embedded ? { postMessage: (data, origin) => hostMessages.push({ data, origin }) } : window;
   window.parent = parent;

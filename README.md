@@ -212,11 +212,11 @@ Canvas controls remain discoverable with the desktop editor offline. Reconnect a
 <details>
 <summary><strong>Host compatibility and current limits</strong></summary>
 
-`open_canvas` advertises an MCP Apps resource and a Codex thread entrypoint. Hosts without MCP Apps UI can open its returned loopback `panelUrl`. The URL is temporary; closing the plugin stops only its owned Rust process, while recovery drafts remain available.
+Codex opens the editable canvas in its browser panel through `canvas_open_browser`. The MCP Apps entrypoint is in the right panel's **＋ → OpenPencil Canvas** menu. Current Codex versions reject local HTTP iframes, so that entrypoint shows a browser launch button. Hosts that permit the declared local frame origin can embed the canvas. The URL is temporary; closing the plugin stops only its owned Rust process, while recovery drafts remain available.
 
 MCP Apps use the initial host theme and live theme notifications. Standalone panels use `prefers-color-scheme`; Codex's in-app browser supplies its resolved app theme.
 
-Native resource loading, browser interaction and embedded Codex UI presentation are separate checks. Live embedded presentation remains unverified. All hosts use the current Codex chat for edit instructions; only the explicit Code panel Generate action can send an implementation prompt when host messaging is available. See [evidence and remaining checks](./docs/validation.md).
+Native resource loading, browser interaction and embedded host presentation are separate checks. Codex's current HTTP iframe restriction prevents embedded canvas presentation. All hosts use the current Codex chat for edit instructions. In the browser canvas, click Code panel Generate and say “继续转代码” in chat; automatic prompt delivery is available only in an embedded host that supports messaging. See [evidence and remaining checks](./docs/validation.md).
 
 This plugin is distributed through the public GitHub repository and releases. It has not been submitted to OpenAI's public Plugin Directory.
 

@@ -10,8 +10,11 @@ Use the connected Rust MCP tools as the source of truth. Start with
 content and use the user's chosen file, page, selection, and reference.
 For connection failures, see [setup](../openpencil-setup/SKILL.md).
 
-For a requested interactive conversation canvas, call `open_canvas` with the
-chosen existing file or without a path for a new document. Verify `canvas_status`
+For a requested interactive conversation canvas in Codex, call `canvas_open_browser`
+and open its returned `panelUrl` in the Codex browser panel or the user's existing
+browser. Codex currently blocks local HTTP iframes in MCP Apps. If only
+`open_canvas` is available, use its returned URL the same way. Pass the
+chosen existing file, or omit the path for a new document. Verify `canvas_status`
 and `get_editor_state`. All native tools then edit that managed canvas. Show the
 UI resource or local panel URL. Do not open a new managed document just to inspect
 the user's existing desktop selection.

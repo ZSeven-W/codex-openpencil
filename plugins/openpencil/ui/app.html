@@ -6,12 +6,17 @@
 html,body { margin:0; height:100%; min-height:600px; background:var(--background); color:var(--text); font:14px sans-serif; }
 iframe { border:0; width:100%; height:100vh; min-height:600px; display:block; }
 #notice { padding:20px; }
+#launcher { max-width:420px; margin:64px auto; padding:24px; line-height:1.7; }
+#launcher h1 { font-size:20px; color:var(--text); }
+#launcher a { display:inline-block; padding:9px 16px; border:1px solid currentColor; border-radius:8px; color:inherit; text-decoration:none; }
 [hidden] { display:none!important; }
-</style></head><body><div id="notice" role="status">连接 OpenPencil 画布…</div><iframe id="panel" title="OpenPencil Canvas" hidden allow="clipboard-read; clipboard-write; local-fonts"></iframe><script>
+</style></head><body><div id="notice" role="status">连接 OpenPencil 画布…</div><section id="launcher" hidden><h1>OpenPencil</h1><p>在浏览器中打开交互画布，当前 Codex 聊天仍可读取、修改和保存设计。</p><a id="open-canvas" target="_blank" rel="noreferrer">打开交互画布</a><p>选中元素后，回到当前聊天描述修改。转代码时点击「生成」，再在聊天说「继续转代码」。</p><p id="launch-status" role="status"></p></section><iframe id="panel" title="OpenPencil Canvas" hidden allow="clipboard-read; clipboard-write; local-fonts"></iframe><script>
 const pending = new Map();
 let nextId = 1, panelOrigin, hostCapabilities = {}, opened = false;
 let hostTheme, hostThemeChanged = false;
 const frame = document.getElementById('panel'), notice = document.getElementById('notice');
+const launcher = document.getElementById('launcher'), launchLink = document.getElementById('open-canvas');
+let launchUrl;
 const systemTheme = window.matchMedia?.('(prefers-color-scheme: dark)');
 const validTheme = value => value === 'light' || value === 'dark';
 let compatibilityTheme = validTheme(window.openai?.theme) ? window.openai.theme : undefined;
@@ -44,6 +49,10 @@ function applyTheme() {
   colorScheme = nextTheme;
   document.documentElement.dataset.theme = colorScheme;
   document.documentElement.style.colorScheme = colorScheme;
+  if (launchUrl) {
+    const url = new URL(launchUrl); url.hash = `theme=${colorScheme}`;
+    launchUrl = url.href; launchLink.href = launchUrl;
+  }
   sendTheme();
 }
 function acceptHostTheme(value) {
@@ -68,6 +77,16 @@ function request(method, params) {
     pending.set(id,{resolve,reject,timer}); window.parent.postMessage({jsonrpc:'2.0',id,method,params},'*');
   });
 }
+launchLink.addEventListener('click', async event => {
+  if (!launchUrl || !hostCapabilities.openLinks) return;
+  event.preventDefault();
+  const status = document.getElementById('launch-status');
+  status.textContent = '正在打开画布…';
+  try {
+    const result = await request('ui/open-link', { url: launchUrl });
+    status.textContent = result?.isError ? '未能打开，请复制链接到浏览器。' : '已请求打开。请在浏览器标签中继续设计。';
+  } catch { status.textContent = '打开未确认，请复制链接到浏览器。'; }
+});
 function show(result) {
   if (result?.isError) { notice.hidden = false; notice.textContent = result.content?.[0]?.text || '画布未打开'; return; }
   const raw = result?.structuredContent?.panelUrl;
@@ -77,6 +96,14 @@ function show(result) {
   // The local server deliberately rejects query parameters. Seed the first paint
   // through the fragment; subsequent changes never navigate the active document.
   url.hash = `theme=${colorScheme}`;
+  // Codex filters HTTP origins from its sandbox CSP, including loopback.
+  // An allowed local server is not necessarily an allowed nested frame.
+  const frameDomains = hostCapabilities.sandbox?.csp?.frameDomains;
+  if (window.location.protocol === 'codex-sandbox:' || (Array.isArray(frameDomains) && !frameDomains.includes(url.origin))) {
+    launchUrl = url.href; launchLink.href = launchUrl;
+    launcher.hidden = false; notice.hidden = true;
+    return;
+  }
   opened = true; panelOrigin = url.origin; frame.src = url.href; frame.hidden = false; notice.hidden = true;
 }
 window.addEventListener('message', event => {
@@ -104,7 +131,7 @@ window.addEventListener('message', event => {
   if (message.method === 'ui/resource-teardown') window.parent.postMessage({jsonrpc:'2.0',id:message.id,result:{}},'*');
 });
 (async()=>{
-  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.9'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
+  const initialized=await request('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'OpenPencil Canvas',version:'0.3.10'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}});
   hostCapabilities=initialized.hostCapabilities||{};
   // A notification received during initialization is newer than its response.
   if (!hostThemeChanged) acceptHostTheme(initialized.hostContext?.theme);
