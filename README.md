@@ -269,7 +269,7 @@ After plugin edits, reinstall with `codex plugin add openpencil@zseven-openpenci
 
 ## Ecosystem
 
-Codex OpenPencil brings **[OpenPencil](https://github.com/ZSeven-W/openpencil)** into Codex. It belongs to the **[ZSeven-W](https://github.com/ZSeven-W)** ecosystem: `jian` supplies the editor UI, `agent-rs` runs OpenPencil's built-in agents, and companion tools add terminal workflows, memory, delegation and QA.
+Codex OpenPencil brings **[OpenPencil](https://github.com/ZSeven-W/openpencil)** into Codex. It belongs to the **[ZSeven-W](https://github.com/ZSeven-W)** ecosystem: `jian` supplies the editor UI, `agent-rs` runs OpenPencil's built-in agents, and companion tools add terminal workflows, mobile workspaces, memory, delegation and QA.
 
 | Project | What it does |
 | --- | --- |
@@ -279,6 +279,7 @@ Codex OpenPencil brings **[OpenPencil](https://github.com/ZSeven-W/openpencil)**
 | **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | Rust agent runtime powering OpenPencil's built-in agents, with model providers, tools, permissions and MCP. |
 | **[jian](https://github.com/ZSeven-W/jian)** | The GPU-Skia Rust UI framework used by OpenPencil. |
 | **[Zode](https://github.com/ZSeven-W/zode)** | AI coding assistant for the terminal that can drive OpenPencil through MCP. |
+| **[Rish App](https://github.com/ZSeven-W/rish-app)** | Your pocket agent — conversations, workspaces and tool execution on your phone, with model choice and operation approvals. |
 | **[noema](https://github.com/ZSeven-W/noema)** | Local-first agent memory with inspectable files, review queues, lexical recall and MCP. |
 | **[DSH Crew](https://github.com/ZSeven-W/dsh-crew)** | Dispatch work from Codex or Claude Code to DeepSeek Harness agents, with native progress reporting. |
 | **[Craft Skills](https://github.com/ZSeven-W/craft-skills)** | Research- and evaluation-driven agent skills for image workflows, visual design and asset verification. |
