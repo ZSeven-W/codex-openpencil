@@ -1,5 +1,34 @@
 # Validation
 
+## Browser launch button correction — 2026-10-17
+
+After reconnection, the real MCP Apps launcher rendered, but clicking its
+`ui/open-link` action returned an acknowledgment without opening a tab. Read-only
+inspection of the running Codex bundle found its external-link payload schema
+accepts HTTPS/Codex schemes, not the local HTTP canvas URL. An acknowledgment
+therefore did not establish browser navigation.
+
+v0.3.12 replaces that action with app-only `canvas_launch_browser`: an explicit
+click opens only the current controller-owned loopback canvas in the system
+browser using an argument array, without a shell. Neither URLs nor command paths
+are accepted from the app. Repeated pending clicks do not launch another tab.
+The wrapper polls `canvas_launch_status`; success requires a matching receipt
+sent by the browser panel after its native editor is ready. Missing browsers,
+request errors, timeouts and unconfirmed receipts expose a copyable URL without
+retrying the launch. Clipboard denial selects the URL for manual copying.
+The browser starts with the launching host's theme. Sandbox policy is unchanged.
+
+Package checks and all 87 plugin tests passed. Native setup verified panel load,
+edit, save and independent reopen. The bundled Codex loader loaded installed
+v0.3.12 with 193 tools, including both app-only launch controls. A real click on
+the shipped launcher in an isolated local host fixture opened a new tab in the
+existing default Chrome profile; the native canvas displayed “画布已连接” and
+the launcher received its ready receipt. Screenshots are retained under ignored
+`artifacts/final-check-20261017/launcher-*-connected.png`. The fixture used its
+own document and did not modify the user's live canvas. This verifies the local
+button-to-browser chain; acceptance from the refreshed real MCP Apps panel still
+requires reconnecting that chat's plugin, and is not claimed by installation.
+
 ## Codex local-frame restriction and browser entrypoint — 2026-10-17
 
 The real Codex MCP Apps entrypoint opened, but its nested local canvas displayed

@@ -19,11 +19,15 @@ payload manifest, version and platform before configuring or starting it.
    returned `panelUrl` works the same way. Codex currently filters local HTTP
    iframe origins, so its MCP Apps entrypoint shows a browser launcher. Do not
    request weaker browser security or claim an embedded canvas was verified.
+   Its launch button uses the local plugin to open the same canvas in the system
+   default browser and waits for an editor-ready receipt. If it stays pending or
+   fails, use the displayed copyable link. `ui/open-link` acknowledgments alone
+   do not prove navigation: the current Codex bridge silently drops HTTP URLs.
 2. Missing runtime configuration triggers installation automatically. Allow the
-   initial download to finish; do not repeatedly call `open_canvas` after a host
+   initial download to finish; do not repeatedly call either opener after a host
    timeout. For preflight or a slow connection, run
    `node scripts/runtime-install.mjs` from the installed plugin directory, then
-   call `open_canvas`. Failed downloads do not configure partial runtimes.
+   call `canvas_open_browser`. Failed downloads do not configure partial runtimes.
    Existing invalid configurations are reported without switching runtimes.
    Configuration stays private in `~/.codex-openpencil/runtime.json`.
    A complete custom package can be selected with
@@ -77,6 +81,6 @@ A stale identity error requires reopening the intended editor or fixing its MCP
 setting. The bridge refuses to silently fall back to a different canvas. Keep
 discovery tokens out of chat, logs, committed files, and reports.
 
-After `open_canvas`, all native tools target that managed session instead of the
+After either canvas opener, all native tools target that managed session instead of the
 discovered desktop editor. Report the target before edits; never silently take
 over a different document.

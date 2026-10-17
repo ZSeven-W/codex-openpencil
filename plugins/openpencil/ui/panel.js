@@ -9,7 +9,9 @@ const snapshots = new Map();
 const systemTheme = window.matchMedia?.('(prefers-color-scheme: dark)');
 const validTheme = value => value === 'light' || value === 'dark';
 const seedTheme = new URLSearchParams(window.location.hash.slice(1)).get('theme');
-let parentTheme = window.parent !== window && validTheme(seedTheme) ? seedTheme : undefined;
+const browserLaunchId = new URLSearchParams(window.location.hash.slice(1)).get('launch');
+let launchAcknowledged = false;
+let parentTheme = validTheme(seedTheme) ? seedTheme : undefined;
 let compatibilityTheme = validTheme(window.openai?.theme) ? window.openai.theme : undefined;
 let colorScheme, parentOrigin, editorInitialized = false;
 
@@ -110,6 +112,10 @@ window.addEventListener('message', event => {
     el('loading').hidden = true; el('save').disabled = el('save-as').disabled = false;
     connectionInterrupted = false; clearError('connection'); restoreStatus();
     sendTheme(); notifyParentReady();
+    if (!launchAcknowledged && /^[A-Za-z0-9_-]{22}$/.test(browserLaunchId || '')) {
+      launchAcknowledged = true;
+      void rpc('canvas_launch_ready', { launchId: browserLaunchId }).catch(() => {});
+    }
   }
   if (value.type === 'op-bridge/dirty-changed') {
     if (!Number.isSafeInteger(value.generation) || !Number.isSafeInteger(value.revision)) return;

@@ -2,17 +2,20 @@
 
 ```text
 Codex plugin host -> Node.js stdio bridge -> one serialized controller
-  before open_canvas -> instance-verified existing Rust MCP editor
-  after open_canvas  -> owned managed Rust daemon -> shared document
+  before either canvas opener -> instance-verified existing Rust MCP editor
+  after either canvas opener  -> owned managed Rust daemon -> shared document
 
-MCP Apps resource -> capability-protected loopback panel -> full Rust WASM editor
-                       Save/Save As/checkpoint              live sync
-                              |                              |
-                              +------ managed daemon --------+
+Codex browser panel -> capability-protected loopback panel -> Rust WASM editor
+                         Save/Save As/checkpoint               live sync
+                                |                               |
+                                +------ managed daemon ---------+
+
+MCP Apps resource -> browser launcher in Codex
+                 -> embedded loopback panel when host frame policy permits
 ```
 
 The Rust engine owns native design tools, layouts, rendering, undo and live sync.
-The plugin adds `open_canvas`, `canvas_status`, `canvas_selection`, `canvas_save`,
+The plugin adds `open_canvas`, `canvas_open_browser`, `canvas_status`, `canvas_selection`, `canvas_save`,
 model-only `canvas_import_image` and app-only `canvas_checkpoint`. It reuses the complete editable engine.
 Native images and JSON-RPC errors pass through.
 
@@ -43,7 +46,7 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.10.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.12.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
@@ -55,6 +58,13 @@ opener without UI-entrypoint metadata; it returns the same managed session and
 URL even when Codex hides `open_canvas` from model tool discovery. The installing
 agent opens that URL in the existing Codex browser panel. Other hosts can embed
 only when their effective frame policy permits the local origin.
+The launcher's button calls app-only `canvas_launch_browser`, which opens only
+the controller-owned loopback URL through the OS default browser launcher,
+without a shell. It accepts a theme, never a caller-provided URL or command.
+`canvas_launch_status` stays pending until the new native editor is ready and
+its local panel submits the matching short-lived launch receipt. A host/link or
+OS launch acknowledgment alone is not success. Failures expose a copyable URL
+without retrying the launch or changing sandbox policy.
 The iframe lifecycle token stays in private UI state, outside model-facing text.
 Editor messages require the exact frame source and origin. No global MCP config
 or anonymous browser is created.

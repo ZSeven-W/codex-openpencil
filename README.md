@@ -130,7 +130,7 @@ After installation and any required reconnect, ask:
 
 > Open an interactive OpenPencil canvas for this conversation. Create a single-page dashboard for a small design studio.
 
-`open_canvas` starts a separate managed Rust editor. Codex verifies the connection and follows the bundled `openpencil-design` workflow to create, inspect, preview, and save the design. Use another chat for another document; opening an existing `.op` file copies it into the session.
+`canvas_open_browser` starts a separate managed Rust editor and returns its URL for Codex's browser panel. Codex verifies the connection and follows the bundled `openpencil-design` workflow to create, inspect, preview, and save the design. Use another chat for another document; opening an existing `.op` file copies it into the session.
 
 The sidebar offers Layers and Slides. Slide cards show live board previews; click a card to navigate to its board. Conversation stays in Codex, so the embedded editor hides its own Agent tab.
 
@@ -185,7 +185,7 @@ These single-page examples were created with native OpenPencil tools and visuall
 <details>
 <summary><strong>Runtime configuration and updates</strong></summary>
 
-First `open_canvas` use also installs a missing runtime automatically. Private settings stay in `~/.codex-openpencil/runtime.json`; downloaded binaries and machine paths are separate from the plugin package. Failed downloads never activate partial runtimes, and invalid existing configuration is reported explicitly.
+First canvas use also installs a missing runtime automatically. Private settings stay in `~/.codex-openpencil/runtime.json`; downloaded binaries and machine paths are separate from the plugin package. Failed downloads never activate partial runtimes, and invalid existing configuration is reported explicitly.
 
 To select a complete custom runtime:
 
@@ -193,7 +193,7 @@ To select a complete custom runtime:
 npm run configure-runtime -- /absolute/path/to/runtime
 ```
 
-To update, inspect the checkout for local changes, pull the published changes, and rerun `npm run setup`. Reconnect the plugin afterward. Valid custom runtimes remain selected, and an interrupted managed upgrade retains the previous configuration. See [repair and update instructions](./INSTALL.md#repair-update-and-manual-runtime).
+To update, inspect the checkout for local changes, pull the published changes, and rerun `npm run setup`. Reconnect the plugin afterward; merely closing and reopening its canvas tab can retain the old running bridge. Toggle the plugin off/on in plugin management, or restart Codex if necessary. Valid custom runtimes remain selected, and an interrupted managed upgrade retains the previous configuration. See [repair and update instructions](./INSTALL.md#repair-update-and-manual-runtime).
 
 </details>
 
@@ -217,9 +217,9 @@ Canvas controls remain discoverable with the desktop editor offline. Reconnect a
 <details>
 <summary><strong>Host compatibility and current limits</strong></summary>
 
-Codex opens the editable canvas in its browser panel through `canvas_open_browser`. The MCP Apps entrypoint is in the right panel's **＋ → OpenPencil Canvas** menu. Current Codex versions reject local HTTP iframes, so that entrypoint shows a browser launch button. Hosts that permit the declared local frame origin can embed the canvas. The URL is temporary; closing the plugin stops only its owned Rust process, while recovery drafts remain available.
+Codex opens the editable canvas in its browser panel through `canvas_open_browser`. The MCP Apps entrypoint is in the right panel's **＋ → OpenPencil Canvas** menu. Current Codex versions reject local HTTP iframes, so that entrypoint shows a button that opens the same canvas in your system's default browser. The plugin confirms that the editor has connected before showing success; a copyable link remains available if opening fails. Hosts that permit the declared local frame origin can embed the canvas. The URL is temporary; closing the plugin stops only its owned Rust process, while recovery drafts remain available.
 
-MCP Apps use the initial host theme and live theme notifications. Standalone panels use `prefers-color-scheme`; Codex's in-app browser supplies its resolved app theme.
+MCP Apps use the initial host theme and live theme notifications. A launched browser canvas starts with that theme; panels opened without a theme use `prefers-color-scheme`. Codex's in-app browser supplies its resolved app theme.
 
 Native resource loading, browser interaction and embedded host presentation are separate checks. Codex's current HTTP iframe restriction prevents embedded canvas presentation. All hosts use the current Codex chat for edit instructions. In the browser canvas, click Code panel Generate and say “继续转代码” in chat; automatic prompt delivery is available only in an embedded host that supports messaging. See [evidence and remaining checks](./docs/validation.md).
 

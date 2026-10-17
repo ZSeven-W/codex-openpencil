@@ -60,6 +60,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     console.log(JSON.stringify({ ok: true, runtime: runtime.version, platform: `${process.platform}-${process.arch}`,
       verified: ['panel', 'native-edit', 'save', 'reopen'], pluginInstalled: !args.includes('--runtime-only'),
       pluginHost,
-      next: 'Call open_canvas if available. Otherwise run npm run canvas in a persistent terminal to use the canvas now; reconnect the plugin or start a new chat to load its tools.' }, null, 2));
+      next: 'Call canvas_open_browser and show its panelUrl in the Codex browser panel. Otherwise run npm run canvas in a persistent terminal to use the canvas now; reconnect the plugin or start a new chat to load its tools.' }, null, 2));
   } catch (error) { console.error(`OpenPencil setup failed: ${error.message}`); process.exitCode = 1; }
 }

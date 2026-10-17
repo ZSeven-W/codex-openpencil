@@ -4,9 +4,10 @@ import { startPanel } from './canvas-panel.mjs';
 import { forward, errorReply } from './transport.mjs';
 import { readCanvasSelection } from './canvas-selection.mjs';
 import { importCanvasImage } from './canvas-images.mjs';
+import { launchCanvas, browserLaunchStatus } from './browser-launch.mjs';
 import { prepareCodegen, completeCodegen, pollCodegen, cancelCodegen, codegenSummary, frameworks } from './canvas-codegen.mjs';
 
-export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.10.html';
+export const CANVAS_URI = 'ui://openpencil/canvas/v0.3.12.html';
 const schema = properties => ({ type: 'object', properties, additionalProperties: false });
 const filePath = { type: 'string', description: 'Absolute .op path; omit to create or reopen this session’s canvas.' };
 export const canvasTools = [
@@ -15,6 +16,12 @@ export const canvasTools = [
     _meta: { ui: { resourceUri: CANVAS_URI }, 'openai/ui': { entrypoints: [{ type: 'thread' }] } } },
   { name: 'canvas_open_browser', description: 'Open or reconnect this chat’s managed editable canvas and return its local panelUrl. Show the URL in the user’s Codex browser panel or existing browser. Use this when the host hides the open_canvas UI entrypoint from model tools or cannot embed local HTTP frames. All subsequent OpenPencil tools target this same canvas.',
     inputSchema: schema({ filePath }), annotations: { destructiveHint: false, openWorldHint: false } },
+  { name: 'canvas_launch_browser', description: 'User-click action: launch only this conversation’s managed canvas in the system default browser. Never accepts a URL or file path. A launcher acknowledgment is pending until the canvas reports ready.',
+    inputSchema: { ...schema({ theme: { type: 'string', enum: ['light', 'dark'] } }), required: ['theme'] },
+    annotations: { destructiveHint: false, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
+  { name: 'canvas_launch_status', description: 'Read whether the browser canvas for this launch has actually connected.',
+    inputSchema: { ...schema({ launchId: { type: 'string' } }), required: ['launchId'] },
+    annotations: { readOnlyHint: true, openWorldHint: false }, _meta: { ui: { visibility: ['app'] } } },
   { name: 'canvas_status', description: 'Read managed canvas file, recovery path, document version and selection.', inputSchema: schema({}),
     annotations: { readOnlyHint: true, openWorldHint: false } },
   { name: 'canvas_selection', description: 'Read the current managed canvas selection: exact node IDs, names, types, parents, active page and document version. Call before modifying selected elements from a chat prompt; read these nodes with batch_get, then edit only their subtrees. Empty selection means no target, never the entire page.',
@@ -67,6 +74,9 @@ export class CanvasController {
   async call(name, args) {
     if (name === 'open_canvas' || name === 'canvas_open_browser') return this.open(args);
     if (!this.session) throw new Error('Open a managed canvas with canvas_open_browser or open_canvas first.');
+    if (name === 'canvas_launch_browser') return toolResult(await launchCanvas(this, args));
+    if (name === 'canvas_launch_status') return toolResult(browserLaunchStatus(this, args));
+    if (name === 'canvas_launch_ready') return toolResult(browserLaunchStatus(this, args, true));
     if (name === 'canvas_import_image') return toolResult(await importCanvasImage(this.session, args));
     if (name === 'canvas_save') return toolResult(await this.session.save(args));
     if (name === 'canvas_checkpoint') return toolResult(await this.session.checkpoint());
@@ -104,7 +114,7 @@ export class CanvasController {
       const upstream = this.session ? await this.session.forward(message) : await forward(message, this.options);
       if (!Object.hasOwn(message, 'id')) return null;
       if (message.method === 'initialize') {
-        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.10' } };
+        const result = upstream?.result || { protocolVersion: message.params?.protocolVersion || '2025-11-25', serverInfo: { name: 'codex-openpencil', version: '0.3.12' } };
         result.capabilities = { ...result.capabilities, tools: { listChanged: true }, resources: {} };
         return reply(result);
       }

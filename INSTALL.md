@@ -56,6 +56,9 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    `open_in_codex` (browser target) or the user's existing browser. Codex currently
    filters HTTP frame origins from its MCP Apps sandbox, including loopback;
    do not embed this URL or ask users to weaken their security settings.
+   The **＋ → OpenPencil Canvas** launcher instead opens the same canvas in the
+   system default browser when clicked, waits for a real editor-ready receipt,
+   and offers a copyable URL if opening is not confirmed.
    If only `open_canvas` is available in the current chat, call it and show its
    returned `panelUrl` in the browser. Verify
    `canvas_status` plus `get_editor_state` before designing. Read the installed
@@ -98,7 +101,7 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
 5. State separately whether the current chat uses the installed MCP plugin or
    the terminal entry point. Codex may require reconnecting the plugin or a new
    chat to load newly installed tools. Do not claim those tools appeared in the
-   current chat without verifying them. After reconnect, use `open_canvas` with
+   current chat without verifying them. After reconnect, use `canvas_open_browser` with
    the saved `.op` file to resume the design.
 
 ## Supported runtime builds
@@ -132,7 +135,9 @@ platforms fail explicitly; the installer never substitutes a different binary.
 - To update, inspect the checkout, pull the published changes and rerun setup.
   Managed downloads follow the new pinned release; valid custom runtimes remain
   selected. An interrupted upgrade retains the previous runtime and configuration.
-  Reconnect the installed plugin afterward. Do not delete unrelated settings.
+  Reconnect the installed plugin afterward (toggle it off/on in plugin management,
+  or restart Codex). Closing only the canvas tab can retain the previous running
+  bridge and UI resource. Do not delete unrelated settings.
 
 Runtime downloads use this repository's pinned GitHub Release assets. Private
 configuration lives under `~/.codex-openpencil/`; override its location with

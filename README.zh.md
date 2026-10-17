@@ -130,7 +130,7 @@ Codex OpenPencil 将 Codex 连接到本地 Rust [OpenPencil](https://github.com/
 
 > 打开这个聊天的 OpenPencil 交互画布，为一个小型设计工作室做单页数据看板。
 
-`open_canvas` 启动独立的托管 Rust 编辑器。Codex 验证连接后，按内置 `openpencil-design` 工作流创建、检查、预览并保存设计。另一份文档使用另一个聊天；打开已有 `.op` 文件时，会先复制到当前独立会话。
+`canvas_open_browser` 启动独立的托管 Rust 编辑器，并返回供 Codex 浏览器面板打开的地址。Codex 验证连接后，按内置 `openpencil-design` 工作流创建、检查、预览并保存设计。另一份文档使用另一个聊天；打开已有 `.op` 文件时，会先复制到当前独立会话。
 
 侧栏提供图层和幻灯片。幻灯片卡片显示画板的实时缩略图，点击即可定位到对应画板。对话留在 Codex，嵌入编辑器隐藏自身的 Agent tab。
 
@@ -185,7 +185,7 @@ Codex OpenPencil 将 Codex 连接到本地 Rust [OpenPencil](https://github.com/
 <details>
 <summary><strong>运行环境配置与更新</strong></summary>
 
-首次使用 `open_canvas` 也会自动安装缺失的运行环境。私有配置保存在 `~/.codex-openpencil/runtime.json`，下载的二进制与本机路径独立于插件包。下载失败不会激活不完整的运行环境，已有配置异常时会明确报错。
+首次打开画布也会自动安装缺失的运行环境。私有配置保存在 `~/.codex-openpencil/runtime.json`，下载的二进制与本机路径独立于插件包。下载失败不会激活不完整的运行环境，已有配置异常时会明确报错。
 
 如需选择自定义完整运行环境：
 
@@ -193,7 +193,7 @@ Codex OpenPencil 将 Codex 连接到本地 Rust [OpenPencil](https://github.com/
 npm run configure-runtime -- /absolute/path/to/runtime
 ```
 
-更新前检查仓库本地改动，拉取发布的更新后再次运行 `npm run setup`，然后重新连接插件。有效的自定义环境会保留，托管环境升级中断时也保留之前的配置。详见[修复与更新说明](./INSTALL.md#repair-update-and-manual-runtime)。
+更新前检查仓库本地改动，拉取发布的更新后再次运行 `npm run setup`，然后重新连接插件。仅关闭并重开画布标签，可能仍使用旧版连接；请在插件管理中停用再启用，必要时重启 Codex。有效的自定义环境会保留，托管环境升级中断时也保留之前的配置。详见[修复与更新说明](./INSTALL.md#repair-update-and-manual-runtime)。
 
 </details>
 
@@ -217,11 +217,11 @@ npm run doctor -- --port 3100
 <details>
 <summary><strong>宿主兼容性与当前限制</strong></summary>
 
-`open_canvas` 提供 MCP Apps 资源和 Codex 聊天入口。不支持 MCP Apps UI 的宿主可打开返回的本地 `panelUrl`。地址临时有效；插件关闭后仅停止自己的 Rust 服务，恢复草稿继续保留。
+Codex 通过 `canvas_open_browser` 在浏览器面板打开可编辑画布。MCP Apps 入口位于右侧面板的 **＋ → OpenPencil Canvas**。当前 Codex 会拦截本地 HTTP iframe，因此该入口的按钮会在系统默认浏览器中打开同一份画布；确认编辑器连接后才显示成功，打开失败时可复制链接。允许所声明本地框架来源的其他宿主可以内嵌画布。地址临时有效；插件关闭后仅停止自己的 Rust 服务，恢复草稿继续保留。
 
-MCP Apps 使用宿主初始主题和实时主题通知；独立面板使用 `prefers-color-scheme`，Codex 内置浏览器会传入当前应用主题。
+MCP Apps 使用宿主初始主题和实时主题通知；通过按钮打开的浏览器画布沿用启动时主题，未指定主题的独立面板使用 `prefers-color-scheme`。Codex 内置浏览器会传入当前应用主题。
 
-原生资源加载、浏览器交互、Codex 内嵌 UI 呈现和自动 `ui/message` 后续消息投递分别验证。真实宿主内嵌呈现与自动消息投递仍待验证，独立面板默认在当前 Codex 聊天描述修改。详见[验证证据与剩余检查](./docs/validation.md)。
+原生资源加载、浏览器交互、宿主内嵌呈现分别验证。当前 Codex 的 HTTP iframe 限制阻止画布内嵌；修改需求仍在当前 Codex 聊天描述。浏览器画布中点击代码面板的「生成」后，在聊天说「继续转代码」；只有支持消息能力的内嵌宿主才能自动投递提示词。详见[验证证据与剩余检查](./docs/validation.md)。
 
 插件通过公开 GitHub 仓库和 Releases 分发，尚未提交或上架 OpenAI 公共插件目录。
 
