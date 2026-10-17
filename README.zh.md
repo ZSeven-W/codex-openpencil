@@ -271,19 +271,19 @@ codex-openpencil/
 
 Codex OpenPencil 把 **[OpenPencil](https://github.com/ZSeven-W/openpencil)** 带进 Codex，属于 **[ZSeven-W](https://github.com/ZSeven-W)** 工具生态：`jian` 提供编辑器 UI，`agent-rs` 运行 OpenPencil 内置智能体，配套工具则提供终端工作流、手机工作区、记忆、任务委派和 QA。
 
-| 项目 | 用途 |
-| --- | --- |
-| **[OpenPencil](https://github.com/ZSeven-W/openpencil)** | 本插件使用的 Rust 矢量设计引擎，提供可编辑文档、布局、渲染和原生 MCP 工具。 |
-| **[DSH OpenPencil](https://github.com/ZSeven-W/dsh-openpencil)** | 兄弟 DeepSeek Harness 集成，在 DSH 内提供精确预览、交互画布与托管编辑器。 |
-| **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | 面向使用 `op` CLI 和 MCP 工具的 Agent 的配套设计指南。 |
-| **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | 驱动 OpenPencil 内置智能体的 Rust Agent 运行时，支持模型提供商、工具、权限和 MCP。 |
-| **[jian](https://github.com/ZSeven-W/jian)** | OpenPencil 使用的 GPU-Skia Rust UI 框架。 |
-| **[Zode](https://github.com/ZSeven-W/zode)** | 面向终端的 AI 编程助手，可通过 MCP 驱动 OpenPencil。 |
-| **[Rish App](https://github.com/ZSeven-W/rish-app)** | 随身 Agent，把会话、工作区和工具执行带到手机，支持多模型接入与操作审批。 |
-| **[noema](https://github.com/ZSeven-W/noema)** | 本地优先的 Agent 记忆系统，提供可检查文件、审阅队列、词法召回和 MCP。 |
-| **[DSH Crew](https://github.com/ZSeven-W/dsh-crew)** | 从 Codex 或 Claude Code 委派任务给 DeepSeek Harness 智能体，并在宿主中显示原生进度。 |
-| **[Craft Skills](https://github.com/ZSeven-W/craft-skills)** | 研究与评测驱动的 Agent 技能，覆盖图像工作流、视觉设计和素材验收。 |
-| **[DSH QA](https://github.com/ZSeven-W/dsh-qa)** | 带证据的应用探索与可重放 QA 场景，覆盖浏览器、桌面、iOS 和 Android 驱动。 |
+| | 项目 | 用途 |
+| :---: | --- | --- |
+| <img src="./plugins/openpencil/assets/icon.png" alt="OpenPencil" width="40" /> | **[OpenPencil](https://github.com/ZSeven-W/openpencil)** | 本插件使用的 Rust 矢量设计引擎，提供可编辑文档、布局、渲染和原生 MCP 工具。 |
+| <img src="./docs/images/ecosystem/dsh-openpencil.png" alt="DSH OpenPencil" width="40" /> | **[DSH OpenPencil](https://github.com/ZSeven-W/dsh-openpencil)** | 兄弟 DeepSeek Harness 集成，在 DSH 内提供精确预览、交互画布与托管编辑器。 |
+|  | **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | 面向使用 `op` CLI 和 MCP 工具的 Agent 的配套设计指南。 |
+|  | **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | 驱动 OpenPencil 内置智能体的 Rust Agent 运行时，支持模型提供商、工具、权限和 MCP。 |
+| <img src="./docs/images/ecosystem/jian.png" alt="jian" width="40" /> | **[jian](https://github.com/ZSeven-W/jian)** | OpenPencil 使用的 GPU-Skia Rust UI 框架。 |
+| <img src="./docs/images/ecosystem/zode.png" alt="Zode" width="40" /> | **[Zode](https://github.com/ZSeven-W/zode)** | 面向终端的 AI 编程助手，可通过 MCP 驱动 OpenPencil。 |
+| <img src="./docs/images/ecosystem/rish-app.png" alt="Rish App" width="40" /> | **[Rish App](https://github.com/ZSeven-W/rish-app)** | 随身 Agent，把会话、工作区和工具执行带到手机，支持多模型接入与操作审批。 |
+| <img src="./docs/images/ecosystem/noema.png" alt="noema" width="40" /> | **[noema](https://github.com/ZSeven-W/noema)** | 本地优先的 Agent 记忆系统，提供可检查文件、审阅队列、词法召回和 MCP。 |
+| <img src="./docs/images/ecosystem/dsh-crew.png" alt="DSH Crew" width="40" /> | **[DSH Crew](https://github.com/ZSeven-W/dsh-crew)** | 从 Codex 或 Claude Code 委派任务给 DeepSeek Harness 智能体，并在宿主中显示原生进度。 |
+|  | **[Craft Skills](https://github.com/ZSeven-W/craft-skills)** | 研究与评测驱动的 Agent 技能，覆盖图像工作流、视觉设计和素材验收。 |
+|  | **[DSH QA](https://github.com/ZSeven-W/dsh-qa)** | 带证据的应用探索与可重放 QA 场景，覆盖浏览器、桌面、iOS 和 Android 驱动。 |
 
 独立 OpenPencil 编辑器还提供 macOS 的 **[Homebrew tap](https://github.com/ZSeven-W/homebrew-openpencil)** 和 Windows 的 **[Scoop bucket](https://github.com/ZSeven-W/scoop-openpencil)**。本 Codex 插件通过自己的安装流程获取匹配的编辑器运行环境。
 

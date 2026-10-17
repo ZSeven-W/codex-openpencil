@@ -271,19 +271,19 @@ After plugin edits, reinstall with `codex plugin add openpencil@zseven-openpenci
 
 Codex OpenPencil brings **[OpenPencil](https://github.com/ZSeven-W/openpencil)** into Codex. It belongs to the **[ZSeven-W](https://github.com/ZSeven-W)** ecosystem: `jian` supplies the editor UI, `agent-rs` runs OpenPencil's built-in agents, and companion tools add terminal workflows, mobile workspaces, memory, delegation and QA.
 
-| Project | What it does |
-| --- | --- |
-| **[OpenPencil](https://github.com/ZSeven-W/openpencil)** | The Rust vector design engine behind this plugin — editable documents, layouts, rendering, and native MCP tools. |
-| **[DSH OpenPencil](https://github.com/ZSeven-W/dsh-openpencil)** | The sibling DeepSeek Harness integration — exact previews, an interactive canvas, and a managed editor inside DSH. |
-| **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | Companion design guidance for agents using the `op` CLI and MCP tools. |
-| **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | Rust agent runtime powering OpenPencil's built-in agents, with model providers, tools, permissions and MCP. |
-| **[jian](https://github.com/ZSeven-W/jian)** | The GPU-Skia Rust UI framework used by OpenPencil. |
-| **[Zode](https://github.com/ZSeven-W/zode)** | AI coding assistant for the terminal that can drive OpenPencil through MCP. |
-| **[Rish App](https://github.com/ZSeven-W/rish-app)** | Your pocket agent — conversations, workspaces and tool execution on your phone, with model choice and operation approvals. |
-| **[noema](https://github.com/ZSeven-W/noema)** | Local-first agent memory with inspectable files, review queues, lexical recall and MCP. |
-| **[DSH Crew](https://github.com/ZSeven-W/dsh-crew)** | Dispatch work from Codex or Claude Code to DeepSeek Harness agents, with native progress reporting. |
-| **[Craft Skills](https://github.com/ZSeven-W/craft-skills)** | Research- and evaluation-driven agent skills for image workflows, visual design and asset verification. |
-| **[DSH QA](https://github.com/ZSeven-W/dsh-qa)** | Evidence-based app exploration and replayable QA scenarios across browser, desktop, iOS and Android drivers. |
+| | Project | What it does |
+| :---: | --- | --- |
+| <img src="./plugins/openpencil/assets/icon.png" alt="OpenPencil" width="40" /> | **[OpenPencil](https://github.com/ZSeven-W/openpencil)** | The Rust vector design engine behind this plugin — editable documents, layouts, rendering, and native MCP tools. |
+| <img src="./docs/images/ecosystem/dsh-openpencil.png" alt="DSH OpenPencil" width="40" /> | **[DSH OpenPencil](https://github.com/ZSeven-W/dsh-openpencil)** | The sibling DeepSeek Harness integration — exact previews, an interactive canvas, and a managed editor inside DSH. |
+|  | **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | Companion design guidance for agents using the `op` CLI and MCP tools. |
+|  | **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | Rust agent runtime powering OpenPencil's built-in agents, with model providers, tools, permissions and MCP. |
+| <img src="./docs/images/ecosystem/jian.png" alt="jian" width="40" /> | **[jian](https://github.com/ZSeven-W/jian)** | The GPU-Skia Rust UI framework used by OpenPencil. |
+| <img src="./docs/images/ecosystem/zode.png" alt="Zode" width="40" /> | **[Zode](https://github.com/ZSeven-W/zode)** | AI coding assistant for the terminal that can drive OpenPencil through MCP. |
+| <img src="./docs/images/ecosystem/rish-app.png" alt="Rish App" width="40" /> | **[Rish App](https://github.com/ZSeven-W/rish-app)** | Your pocket agent — conversations, workspaces and tool execution on your phone, with model choice and operation approvals. |
+| <img src="./docs/images/ecosystem/noema.png" alt="noema" width="40" /> | **[noema](https://github.com/ZSeven-W/noema)** | Local-first agent memory with inspectable files, review queues, lexical recall and MCP. |
+| <img src="./docs/images/ecosystem/dsh-crew.png" alt="DSH Crew" width="40" /> | **[DSH Crew](https://github.com/ZSeven-W/dsh-crew)** | Dispatch work from Codex or Claude Code to DeepSeek Harness agents, with native progress reporting. |
+|  | **[Craft Skills](https://github.com/ZSeven-W/craft-skills)** | Research- and evaluation-driven agent skills for image workflows, visual design and asset verification. |
+|  | **[DSH QA](https://github.com/ZSeven-W/dsh-qa)** | Evidence-based app exploration and replayable QA scenarios across browser, desktop, iOS and Android drivers. |
 
 For the standalone OpenPencil editor, see the **[Homebrew tap](https://github.com/ZSeven-W/homebrew-openpencil)** for macOS and **[Scoop bucket](https://github.com/ZSeven-W/scoop-openpencil)** for Windows. This Codex plugin installs its matching editor runtime through its own setup flow.
 
