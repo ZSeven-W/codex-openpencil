@@ -130,6 +130,8 @@ After installation and any required reconnect, ask:
 
 > Open an interactive OpenPencil canvas for this conversation. Create a single-page dashboard for a small design studio.
 
+You can also choose **+ → OpenPencil Canvas → 在 Codex 中打开 (Open in Codex)** in the desktop app's right panel. The launcher sends an opening request to the current chat, and Codex opens the canvas in its built-in browser. It confirms the connection after the native editor is ready. If the host does not support this handoff, use **复制打开指令 (Copy opening instruction)** and send it in the current chat.
+
 `canvas_open_browser` starts a separate managed Rust editor and returns its URL for Codex's browser panel. Codex verifies the connection and follows the bundled `openpencil-design` workflow to create, inspect, preview, and save the design. Use another chat for another document; opening an existing `.op` file copies it into the session.
 
 The sidebar offers Layers and Slides. Slide cards show live board previews; click a card to navigate to its board. Conversation stays in Codex, so the embedded editor hides its own Agent tab.

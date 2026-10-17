@@ -1,5 +1,22 @@
 # Validation
 
+## v0.3.13 runtime pin and publication — 2026-10-17
+
+The plugin now pins `runtime-v0.8.5-d155cd0`, built from upstream
+`d155cd08c09cdb79f4c0a2c733dc5f9376765abd`. The downloaded catalog's digest
+and all six archive sizes and SHA-256 values match GitHub's published asset
+metadata. Runtime publication [run 39027593112](https://github.com/ZSeven-W/codex-openpencil/actions/runs/39027593112)
+passed the dependency audit, production Web/WASM gate, and all six native
+build/edit/save/reopen jobs. The audit includes reviewed exceptions for the
+unchanged build-only Copilot SDK ZIP dependency; it does not mean every locked
+package has been upgraded.
+
+The runtime workflow now marks future runtime-only releases as `latest=false`.
+The user-facing plugin release owns GitHub Latest. English and Chinese opening
+instructions describe the verified plus-menu → current-chat → in-app-browser
+handoff and its copy fallback. Package checks and all 87 plugin tests passed.
+Fresh installation against this exact pin remains the final publication gate.
+
 ## In-app browser handoff — 2026-10-17
 
 The user confirmed that v0.3.12 opened Chrome. That default-browser behavior

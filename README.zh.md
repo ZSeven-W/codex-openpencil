@@ -130,6 +130,8 @@ Codex OpenPencil 将 Codex 连接到本地 Rust [OpenPencil](https://github.com/
 
 > 打开这个聊天的 OpenPencil 交互画布，为一个小型设计工作室做单页数据看板。
 
+也可以从桌面端右侧面板选择 **＋ → OpenPencil Canvas → 在 Codex 中打开**。入口会将打开请求发送到当前聊天，由 Codex 在内置浏览器中打开画布；原生编辑器就绪后，入口显示连接成功。宿主不支持自动交接时，点击**复制打开指令**，粘贴到当前聊天并发送即可。
+
 `canvas_open_browser` 启动独立的托管 Rust 编辑器，并返回供 Codex 浏览器面板打开的地址。Codex 验证连接后，按内置 `openpencil-design` 工作流创建、检查、预览并保存设计。另一份文档使用另一个聊天；打开已有 `.op` 文件时，会先复制到当前独立会话。
 
 侧栏提供图层和幻灯片。幻灯片卡片显示画板的实时缩略图，点击即可定位到对应画板。对话留在 Codex，嵌入编辑器隐藏自身的 Agent tab。
