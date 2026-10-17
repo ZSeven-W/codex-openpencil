@@ -2,8 +2,8 @@
 
 The PNG assets below are copied without modification from the projects they
 identify. The READMEs request a width of 40 pixels, preserve aspect ratios and
-allow GitHub to shrink the images on narrow layouts. OpenPencil and
-openpencil-skill share this repository's existing OpenPencil family icon,
+allow GitHub to shrink the images on narrow layouts. OpenPencil reuses this
+repository's existing icon,
 [`plugins/openpencil/assets/icon.png`](../../../plugins/openpencil/assets/icon.png).
 
 | File | Source |

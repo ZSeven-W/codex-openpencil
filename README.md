@@ -275,7 +275,6 @@ Codex OpenPencil brings **[OpenPencil](https://github.com/ZSeven-W/openpencil)**
 | :---: | --- | --- |
 | <img src="./plugins/openpencil/assets/icon.png" alt="OpenPencil" width="40" /> | **[OpenPencil](https://github.com/ZSeven-W/openpencil)** | The Rust vector design engine behind this plugin — editable documents, layouts, rendering, and native MCP tools. |
 | <img src="./docs/images/ecosystem/dsh-openpencil.png" alt="DSH OpenPencil" width="40" /> | **[DSH OpenPencil](https://github.com/ZSeven-W/dsh-openpencil)** | The sibling DeepSeek Harness integration — exact previews, an interactive canvas, and a managed editor inside DSH. |
-| <img src="./plugins/openpencil/assets/icon.png" alt="OpenPencil Skill" width="40" /> | **[openpencil-skill](https://github.com/ZSeven-W/openpencil-skill)** | Companion design guidance for agents using the `op` CLI and MCP tools. |
 | <img src="./docs/images/ecosystem/agent-rs.svg" alt="agent-rs" width="40" /> | **[agent-rs](https://github.com/ZSeven-W/agent-rs)** | Rust agent runtime powering OpenPencil's built-in agents, with model providers, tools, permissions and MCP. |
 | <img src="./docs/images/ecosystem/jian.png" alt="jian" width="40" /> | **[jian](https://github.com/ZSeven-W/jian)** | The GPU-Skia Rust UI framework used by OpenPencil. |
 | <img src="./docs/images/ecosystem/zode.png" alt="Zode" width="40" /> | **[Zode](https://github.com/ZSeven-W/zode)** | AI coding assistant for the terminal that can drive OpenPencil through MCP. |
