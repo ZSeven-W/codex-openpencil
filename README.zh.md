@@ -217,7 +217,7 @@ npm run doctor -- --port 3100
 <details>
 <summary><strong>宿主兼容性与当前限制</strong></summary>
 
-Codex 通过 `canvas_open_browser` 在浏览器面板打开可编辑画布。MCP Apps 入口位于右侧面板的 **＋ → OpenPencil Canvas**。当前 Codex 会拦截本地 HTTP iframe，因此该入口的按钮会在系统默认浏览器中打开同一份画布；确认编辑器连接后才显示成功，打开失败时可复制链接。允许所声明本地框架来源的其他宿主可以内嵌画布。地址临时有效；插件关闭后仅停止自己的 Rust 服务，恢复草稿继续保留。
+Codex 通过 `canvas_open_browser` 在浏览器面板打开可编辑画布。MCP Apps 入口位于右侧面板的 **＋ → OpenPencil Canvas**。当前 Codex 会拦截本地 HTTP iframe。宿主支持发送聊天消息时，入口按钮会请求当前 Codex 聊天在内置浏览器中打开同一份画布，收到编辑器就绪回执后才显示已连接；不支持时则复制打开指令，粘贴到当前聊天发送。插件不会自动启动系统浏览器。允许所声明本地框架来源的其他宿主可以内嵌画布。地址临时有效；插件关闭后仅停止自己的 Rust 服务，恢复草稿继续保留。
 
 MCP Apps 使用宿主初始主题和实时主题通知；通过按钮打开的浏览器画布沿用启动时主题，未指定主题的独立面板使用 `prefers-color-scheme`。Codex 内置浏览器会传入当前应用主题。
 

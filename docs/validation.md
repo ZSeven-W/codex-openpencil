@@ -1,5 +1,37 @@
 # Validation
 
+## In-app browser handoff — 2026-10-17
+
+The user confirmed that v0.3.12 opened Chrome. That default-browser behavior
+was not the intended Codex in-app experience and is superseded by v0.3.13.
+The OS browser launcher has been removed. App-only `canvas_prepare_browser`
+returns the existing managed canvas URL and a two-minute ready receipt without
+opening anything. Where the host advertises text messaging, an explicit click
+sends one standard `ui/message` to the current chat, requesting its built-in
+browser interface. Otherwise the launcher copies an opening instruction to send
+in that chat. Message acknowledgments are never treated as editor connections;
+uncertain messages are not automatically resent. Failed and unsupported paths
+never switch to an external browser.
+
+Package validation and all 87 tests passed, including current-chat capability
+checks, no external-browser action, duplicate-message prevention, foreign URL
+rejection, clipboard denial and expired/mismatched receipts. Setup verified
+native edit/save/independent reopen and installed v0.3.13; Codex's actual plugin
+loader discovered 193 tools including the new app-only preparation control.
+An isolated native document opened in the existing Codex in-app browser visibly
+showed “画布已连接” and returned its matching ready receipt. The user's existing
+blank managed canvas was also opened and visibly connected in the in-app browser,
+without editing its contents. Screenshots remain under ignored
+`artifacts/final-check-20261017/`.
+
+Read-only local inspection found a Codex browser deep-link route, but Browser Use
+security rejected a test navigation. That route was abandoned; no deep-link
+execution or security-policy change is included in the implementation. Opening
+a normal local HTTP page through the built-in browser is the supported path.
+The real MCP Apps tab still displayed the old v0.3.12 launcher during this check.
+Its new message handoff has automated boundary coverage, but refreshed live
+MCP Apps delivery is not claimed until that connection loads the new version.
+
 ## Browser launch button correction — 2026-10-17
 
 After reconnection, the real MCP Apps launcher rendered, but clicking its

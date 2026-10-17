@@ -53,12 +53,15 @@ Rust compiler, npm dependency install, or separate OpenPencil desktop app is nee
    host check. This check opens no chat and does not edit a design. `OPENPENCIL_CODEX_BIN` can identify a
    non-PATH Codex executable. No runtime is downloaded during tool discovery.
 3. Prefer `canvas_open_browser` in Codex, then show its `panelUrl` with
-   `open_in_codex` (browser target) or the user's existing browser. Codex currently
+   `open_in_codex` (browser target) or `@Browser`. Use an external browser only
+   when the user explicitly requests one. Codex currently
    filters HTTP frame origins from its MCP Apps sandbox, including loopback;
    do not embed this URL or ask users to weaken their security settings.
-   The **＋ → OpenPencil Canvas** launcher instead opens the same canvas in the
-   system default browser when clicked, waits for a real editor-ready receipt,
-   and offers a copyable URL if opening is not confirmed.
+   The **＋ → OpenPencil Canvas** launcher asks the current Codex chat to open
+   the same canvas in its built-in browser when host text messaging is available.
+   It waits for a real editor-ready receipt. Hosts without messaging show a
+   copyable opening instruction to send in the current chat. It does not launch
+   the system browser.
    If only `open_canvas` is available in the current chat, call it and show its
    returned `panelUrl` in the browser. Verify
    `canvas_status` plus `get_editor_state` before designing. Read the installed

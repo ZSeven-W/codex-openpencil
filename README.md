@@ -217,7 +217,7 @@ Canvas controls remain discoverable with the desktop editor offline. Reconnect a
 <details>
 <summary><strong>Host compatibility and current limits</strong></summary>
 
-Codex opens the editable canvas in its browser panel through `canvas_open_browser`. The MCP Apps entrypoint is in the right panel's **＋ → OpenPencil Canvas** menu. Current Codex versions reject local HTTP iframes, so that entrypoint shows a button that opens the same canvas in your system's default browser. The plugin confirms that the editor has connected before showing success; a copyable link remains available if opening fails. Hosts that permit the declared local frame origin can embed the canvas. The URL is temporary; closing the plugin stops only its owned Rust process, while recovery drafts remain available.
+Codex opens the editable canvas in its browser panel through `canvas_open_browser`. The MCP Apps entrypoint is in the right panel's **＋ → OpenPencil Canvas** menu. Current Codex versions reject local HTTP iframes. Where the host supports chat messages, the entrypoint asks the current Codex chat to open the same canvas in its built-in browser; it waits for an editor-ready receipt before showing a connection. Otherwise, copy the opening instruction and send it in the current chat. The plugin does not launch your system browser. Hosts that permit the declared local frame origin can embed the canvas. The URL is temporary; closing the plugin stops only its owned Rust process, while recovery drafts remain available.
 
 MCP Apps use the initial host theme and live theme notifications. A launched browser canvas starts with that theme; panels opened without a theme use `prefers-color-scheme`. Codex's in-app browser supplies its resolved app theme.
 

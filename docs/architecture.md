@@ -46,7 +46,7 @@ No failed mutation is replayed automatically.
 
 ## UI and persistence contract
 
-`ui://openpencil/canvas/v0.3.12.html` is `text/html;profile=mcp-app`. `open_canvas`
+`ui://openpencil/canvas/v0.3.13.html` is `text/html;profile=mcp-app`. `open_canvas`
 advertises `_meta.ui.resourceUri` and the `openai/ui` thread entrypoint. The wrapper
 negotiates `ui/initialize`, handles tool results and sends selection context when
 supported. Its CSP permits only this panel's exact origin. The panel checks an
@@ -58,13 +58,16 @@ opener without UI-entrypoint metadata; it returns the same managed session and
 URL even when Codex hides `open_canvas` from model tool discovery. The installing
 agent opens that URL in the existing Codex browser panel. Other hosts can embed
 only when their effective frame policy permits the local origin.
-The launcher's button calls app-only `canvas_launch_browser`, which opens only
-the controller-owned loopback URL through the OS default browser launcher,
-without a shell. It accepts a theme, never a caller-provided URL or command.
-`canvas_launch_status` stays pending until the new native editor is ready and
-its local panel submits the matching short-lived launch receipt. A host/link or
-OS launch acknowledgment alone is not success. Failures expose a copyable URL
-without retrying the launch or changing sandbox policy.
+The launcher calls app-only `canvas_prepare_browser`, which returns only the
+controller-owned loopback URL and a two-minute ready receipt. It accepts a theme,
+never a caller-provided URL or command, and never launches a browser. When the
+host advertises text messaging, one standard `ui/message` asks the current Codex
+chat to open that exact URL with its built-in browser interface. Without that
+capability, the user copies an opening instruction into the current chat.
+`canvas_launch_status` stays pending until the native editor is ready and its
+local panel submits the matching receipt. A message acknowledgment alone is not
+success. An uncertain handoff is never automatically resent, and no OS opener,
+deep link, sandbox-policy change or external-browser fallback is used.
 The iframe lifecycle token stays in private UI state, outside model-facing text.
 Editor messages require the exact frame source and origin. No global MCP config
 or anonymous browser is created.

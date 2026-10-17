@@ -49,9 +49,9 @@ import { appendFileSync } from 'node:fs';
 for await (const line of createInterface({input:process.stdin})) {
  const q=JSON.parse(line); appendFileSync(process.env.CALLS,q.method+'\\n');
  if(!q.id) continue;
- const controls=Object.fromEntries(['open_canvas','canvas_open_browser','canvas_launch_browser','canvas_launch_status','canvas_status','canvas_selection','canvas_import_image','canvas_save','canvas_codegen_status','canvas_codegen_complete'].map(n=>[n,{}]));
+ const controls=Object.fromEntries(['open_canvas','canvas_open_browser','canvas_prepare_browser','canvas_launch_status','canvas_status','canvas_selection','canvas_import_image','canvas_save','canvas_codegen_status','canvas_codegen_complete'].map(n=>[n,{}]));
  if(process.env.CASE==='old-version') delete controls.canvas_import_image;
- if(process.env.CASE==='old-launcher') delete controls.canvas_launch_browser;
+ if(process.env.CASE==='old-launcher') delete controls.canvas_prepare_browser;
  const result=q.method==='initialize'?{}:{data:process.env.CASE==='missing'?[]:[{name:'codex_openpencil',
  pluginId:process.env.CASE==='foreign'?null:'openpencil@zseven-openpencil',tools:process.env.CASE==='incomplete'?{}:controls,
  toolsError:process.env.CASE==='failed'?'Node executable missing':null}]};

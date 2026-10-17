@@ -14,15 +14,20 @@ payload manifest, version and platform before configuring or starting it.
 
 1. In Codex, call `canvas_open_browser`, optionally with the user's existing
    absolute `.op` path, then open its `panelUrl` in the Codex browser panel
-   (`open_in_codex`, browser target) or the user's existing browser. The source
+   (`open_in_codex`, browser target) or `@Browser`. Use an external browser only
+   when the user explicitly requests one. The source
    is copied into a recovery draft. If only `open_canvas` is available, its
    returned `panelUrl` works the same way. Codex currently filters local HTTP
    iframe origins, so its MCP Apps entrypoint shows a browser launcher. Do not
    request weaker browser security or claim an embedded canvas was verified.
-   Its launch button uses the local plugin to open the same canvas in the system
-   default browser and waits for an editor-ready receipt. If it stays pending or
-   fails, use the displayed copyable link. `ui/open-link` acknowledgments alone
-   do not prove navigation: the current Codex bridge silently drops HTTP URLs.
+   Its button prepares the same canvas URL and, where host text messaging is
+   supported, sends one opening request to the current chat through `ui/message`.
+   Open the supplied exact URL with `open_in_codex` (browser target) or `@Browser`;
+   preserve its theme/launch fragment so the panel can confirm editor readiness.
+   Do not create a second canvas, launch an OS browser or use a deep-link workaround.
+   Without host messaging, the user copies an opening instruction into the current
+   chat. A message acknowledgment is not a connected canvas. `ui/open-link`
+   acknowledgments also do not prove navigation: the current bridge drops HTTP URLs.
 2. Missing runtime configuration triggers installation automatically. Allow the
    initial download to finish; do not repeatedly call either opener after a host
    timeout. For preflight or a slow connection, run
