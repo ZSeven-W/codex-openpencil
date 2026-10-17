@@ -15,7 +15,22 @@ The runtime workflow now marks future runtime-only releases as `latest=false`.
 The user-facing plugin release owns GitHub Latest. English and Chinese opening
 instructions describe the verified plus-menu → current-chat → in-app-browser
 handoff and its copy fallback. Package checks and all 87 plugin tests passed.
-Fresh installation against this exact pin remains the final publication gate.
+Fresh public installation against this exact pin passed on macOS ARM64/x64,
+Windows ARM64/x64 and Linux ARM64/x64 in
+[run 39046299744](https://github.com/ZSeven-W/codex-openpencil/actions/runs/39046299744).
+Each job used empty plugin/runtime state and public Codex CLI 0.162.1, verified
+native panel/edit/save/independent reopen, exercised the installed plugin and
+terminal fallback, and repeated setup. POSIX jobs also exercised a real PTY.
+All six Node.js 22/24 package jobs passed in
+[run 39046294372](https://github.com/ZSeven-W/codex-openpencil/actions/runs/39046294372).
+These installation checks used commit `6242af71`; later release-documentation
+changes do not alter the tested plugin or runtime payload. Bare-OS provisioning
+and other hosts' MCP Apps presentation are separate from this runner coverage.
+A local empty-runtime-state setup on macOS ARM64 with Node.js 26.7 also downloaded
+the exact published package, verified its manifest and passed native panel,
+edit/save/independent reopen. Initial download attempts hit a TLS interruption;
+a later normal setup through the existing system proxy succeeded without a
+code or security-setting change.
 
 ## In-app browser handoff — 2026-10-17
 
