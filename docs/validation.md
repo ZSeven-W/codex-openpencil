@@ -28,9 +28,16 @@ Read-only local inspection found a Codex browser deep-link route, but Browser Us
 security rejected a test navigation. That route was abandoned; no deep-link
 execution or security-policy change is included in the implementation. Opening
 a normal local HTTP page through the built-in browser is the supported path.
-The real MCP Apps tab still displayed the old v0.3.12 launcher during this check.
-Its new message handoff has automated boundary coverage, but refreshed live
-MCP Apps delivery is not claimed until that connection loads the new version.
+After the user restarted Codex, a real click in the refreshed v0.3.13 MCP Apps
+panel delivered its `ui/message` to this chat. The exact existing canvas URL,
+including theme and launch receipt, was opened through Codex's browser target.
+The built-in browser visibly showed “画布已连接”, an enabled Save button and
+the native editor. The originating MCP Apps panel independently showed
+“画布已连接。” after receiving the matching native-ready receipt. This verifies
+the real button → current chat → in-app browser → editor-ready → launcher
+receipt chain. The blank document was not edited or recreated. The acceptance
+screenshot is retained locally as
+`artifacts/final-check-20261017/real-handoff-in-app-connected.png`.
 
 ## Browser launch button correction — 2026-10-17
 
