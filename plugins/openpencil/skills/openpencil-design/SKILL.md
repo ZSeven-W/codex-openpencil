@@ -1,9 +1,13 @@
 ---
 name: openpencil-design
-description: Create or edit editable .op UI designs with the Codex OpenPencil plugin, including layout inspection, PNG previews, and verified saves. Use for OpenPencil canvas work, not generic frontend implementation.
+description: Create or edit editable .op UI designs with the Codex OpenPencil plugin, including layout inspection, PNG previews, and verified saves. Use for OpenPencil or OP/op design requests such as “用op设计” or “用 OP 修改选中元素”, not generic frontend implementation.
 ---
 
 # Design with OpenPencil
+
+Recognize “OP” and “op” as OpenPencil in requests for UI design, canvas edits
+or .op files, including “用op设计一个单页 APP”. Open or reuse this plugin's
+conversation canvas; export to code only when the user requests implementation.
 
 Use the connected Rust MCP tools as the source of truth. Start with
 `get_editor_state` and read the relevant nodes. Preserve existing document
