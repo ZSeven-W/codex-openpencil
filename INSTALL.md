@@ -150,3 +150,10 @@ OpenPencil document during its smoke test.
 Downloads honor `HTTPS_PROXY` / `https_proxy`, `NO_PROXY`, and an enabled macOS
 HTTPS system proxy without changing system settings. SOCKS-only environments
 should expose their HTTP proxy endpoint via `HTTPS_PROXY`.
+
+## Optional Finder file opening (macOS)
+
+To open saved `.op` files in a visual window and fit their content automatically,
+see [the optional Finder opener](docs/finder-opener.md). Installation is explicit;
+normal setup does not change file associations. Codex file links may still open
+in its source editor.

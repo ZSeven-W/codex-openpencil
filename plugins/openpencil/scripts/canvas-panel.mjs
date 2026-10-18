@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { diskDocument } from './document-format.mjs';
 import { MAX_BYTES } from './transport.mjs';
 
 export async function panelHtml(grant) {
@@ -27,7 +28,12 @@ export async function startPanel(controller) {
       }
       if (req.url === route && req.method === 'GET') {
         const session = await controller.enqueue(() => controller.open({}));
-        const html = await panelHtml({ ...session._meta.canvas, rpcPath: `${route}/rpc`, source: session.structuredContent.filePath });
+        // The dedicated file opener uses the editor's document-open protocol,
+        // which fits the loaded scene using its real viewport and chrome.
+        // Read the live recovery copy on every page load, never replay the source.
+        const openDocument = controller.options.openInEditor
+          ? JSON.stringify(diskDocument(await controller.session.document())) : undefined;
+        const html = await panelHtml({ ...session._meta.canvas, rpcPath: `${route}/rpc`, source: session.structuredContent.filePath, openDocument });
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
           'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff',
           'Content-Security-Policy': `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src ${session._meta.canvas.editorOrigin}; connect-src 'self'; img-src data:` });
