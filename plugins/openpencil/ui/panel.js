@@ -11,6 +11,7 @@ const validTheme = value => value === 'light' || value === 'dark';
 const seedTheme = new URLSearchParams(window.location.hash.slice(1)).get('theme');
 const browserLaunchId = new URLSearchParams(window.location.hash.slice(1)).get('launch');
 let launchAcknowledged = false;
+let initialOpenSent = false, initialOpenGeneration;
 let parentTheme = validTheme(seedTheme) ? seedTheme : undefined;
 let compatibilityTheme = validTheme(window.openai?.theme) ? window.openai.theme : undefined;
 let colorScheme, parentOrigin, editorInitialized = false;
@@ -106,7 +107,19 @@ window.addEventListener('message', event => {
   if (event.source !== frame.contentWindow || event.origin !== grant.editorOrigin || typeof event.data !== 'string') return;
   let value; try { value = JSON.parse(event.data); } catch { return; }
   if (value.type === 'op-bridge/listening') initialize();
-  if (value.type === 'op-bridge/ready') {
+  if (value.type === 'op-bridge/ready' && grant.openDocument) {
+    if (!initialOpenSent && Number.isSafeInteger(value.generation) && Number.isSafeInteger(value.revision)) {
+      initialOpenSent = true;
+      initialOpenGeneration = value.generation + 1;
+      send({ type: 'op-bridge/open-document', json: grant.openDocument });
+    }
+    return;
+  }
+  if (value.type === 'op-bridge/opened' && initialOpenSent) {
+    if (value.generation !== initialOpenGeneration) return;
+    value.revision = 0; // The native opened event carries generation only.
+  }
+  if (value.type === 'op-bridge/ready' || (value.type === 'op-bridge/opened' && initialOpenSent)) {
     if (!Number.isSafeInteger(value.generation) || !Number.isSafeInteger(value.revision)) return;
     ready = true; generation = value.generation; revision = value.revision;
     el('loading').hidden = true; el('save').disabled = el('save-as').disabled = false;

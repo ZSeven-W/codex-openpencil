@@ -21,6 +21,7 @@
     "smoke": "node scripts/smoke.mjs",
     "setup": "node scripts/setup.mjs",
     "canvas": "node scripts/canvas.mjs",
-    "codegen-smoke": "node scripts/codegen-smoke.mjs"
+    "codegen-smoke": "node scripts/codegen-smoke.mjs",
+    "install-file-opener": "node scripts/install-file-opener.mjs"
   }
 }

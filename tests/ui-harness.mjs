@@ -15,7 +15,7 @@ function events(target = {}) {
 
 // Execute the shipped inline scripts with deterministic DOM/event boundaries.
 // No browser, network, native editor, or user's document is involved.
-export async function createUiHarness(kind, { dark = false, embedded = true, hash = '', openaiTheme, protocol = 'http:' } = {}) {
+export async function createUiHarness(kind, { dark = false, embedded = true, hash = '', openaiTheme, protocol = 'http:', openDocument } = {}) {
   const hostMessages = [], editorMessages = [], frameMessages = [], navigation = [], rpcCalls = [], clipboard = [];
   let rpcHandler = () => ({}), rawRpc = false;
   const elements = new Map();
@@ -46,7 +46,7 @@ export async function createUiHarness(kind, { dark = false, embedded = true, has
   const timers = new Map(); let timerId = 0;
   const navigator = { clipboard: { writeText: async text => { clipboard.push(text); } } };
   const context = vm.createContext({ URL, URLSearchParams, window, document, navigator, location: window.location, console,
-    grant: { editorOrigin: 'http://127.0.0.1:5678', token: 'test-token', rpcPath: '/canvas/test/rpc', source: '/test.op' },
+    grant: { editorOrigin: 'http://127.0.0.1:5678', token: 'test-token', rpcPath: '/canvas/test/rpc', source: '/test.op', openDocument },
     crypto: { randomUUID: () => 'test-snapshot' }, AbortSignal,
     setTimeout: fn => { timers.set(++timerId, fn); return timerId; }, clearTimeout: id => timers.delete(id),
     setInterval: () => ++timerId, clearInterval() {},
